@@ -1,23 +1,9 @@
-import sys
 import argparse
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--bill')
-parser.add_argument('--endorsement')
-parser.add_argument('--qualifier')
-parser.add_argument('--x')
-parser.add_argument('--y')
-args = parser.parse_args()
-
-print(f"✅ Endorsing '{args.bill}'")
-print(f"📍 Text: '{args.endorsement}' ({args.qualifier})")
-print(f"📌 Placement: X={args.x}, Y={args.y}")
-
-# TODO: Add PDF placement logic hereimport argparse
 from PyPDF2 import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from io import BytesIO
+import os
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -38,7 +24,6 @@ can.setFillColorRGB(1, 1, 1)  # white box
 can.rect(args.x - 5, args.y - 5, box_width, box_height, fill=1, stroke=0)
 
 can.setFillColorRGB(0, 0, 0)  # black text
-can.drawString(args.x, args.y, f"{args.endorsement} ({args.qualifier})")
 can.drawString(args.x, args.y, f"{args.endorsement} ({args.qualifier})")
 can.save()
 packet.seek(0)

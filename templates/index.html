@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Sovereign Finance Cockpit</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <div id="global-loader" class="loader-overlay hidden" role="status" aria-live="polite">
@@ -217,13 +217,13 @@
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 </script>
-  <script src="knowledgeBase.js"></script>
-  <script src="creditorManager.js"></script>
-  <script src="userProfile.js"></script>
-  <script src="vehicleFinancing.js"></script>
-  <script src="billEndorsement.js"></script>
-  <script src="creditReportAnalysis.js"></script>
-  <script src="fdcpaLogger.js"></script>
+  <script src="{{ url_for('static', filename='knowledgeBase.js') }}"></script>
+  <script src="{{ url_for('static', filename='creditorManager.js') }}"></script>
+  <script src="{{ url_for('static', filename='userProfile.js') }}"></script>
+  <script src="{{ url_for('static', filename='vehicleFinancing.js') }}"></script>
+  <script src="{{ url_for('static', filename='billEndorsement.js') }}"></script>
+  <script src="{{ url_for('static', filename='creditReportAnalysis.js') }}"></script>
+  <script src="{{ url_for('static', filename='fdcpaLogger.js') }}"></script>
   <script src="script.js"></script>
 </body>
 </html>
