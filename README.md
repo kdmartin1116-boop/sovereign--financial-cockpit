@@ -1,6 +1,6 @@
 # Sovereign Finance Cockpit
 
-Sovereign Finance Cockpit is a web-based application designed to empower individuals to take control of their financial sovereignty. It provides a suite of tools to analyze financial documents, generate legal remedies, and manage interactions with creditors and debt collectors.
+Sovereign Finance Cockpit is a web-based application designed to empower individuals to take control of their financial sovereignty. It provides a suite of tools to analyze financial documents, generate legal remedies, and manage interactions with creditors and debt collectors. The project is built on the philosophy that every individual has the right to understand and manage their financial affairs, and to seek remedy for any injustices they may face.
 
 ## Features
 
@@ -22,18 +22,33 @@ Sovereign Finance Cockpit is a web-based application designed to empower individ
 - **Legal Resources:** Access a curated list of commentary and case law relevant to financial sovereignty.
 - **Sovereign Loop:** Track your progress through the key stages of financial remedy: Intake, Validate, Remedy, Log, and Reflect.
 
-## How to Use
+## Setup Instructions
 
-1. **Set up your profile:** Enter your name and address in the User Profile section.
-2. **Add your creditors:** Populate the Creditor Address Book with the names and addresses of your creditors.
-3. **Use the tools:** Select the appropriate tool from the cockpit to analyze documents, generate letters, or log interactions.
-4. **Follow the on-screen instructions:** Each tool will guide you through the process of uploading documents and providing the necessary information.
-5. **Generate and download documents:** Once you have provided all the required information, you can generate and download your legal documents.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/kdmartin-boop/sovereign-financial-cockpit.git
+   cd sovereign-financial-cockpit
+   ```
 
-## Technologies Used
+2. **Install dependencies:**
+   This project uses Python and Flask for the backend. You will need to have Python 3 installed. You can install Flask using pip:
+   ```bash
+   pip install Flask
+   ```
+   The frontend dependencies are included in the `index.html` file via CDNs, so no further installation is needed.
 
-- **Frontend:** HTML, CSS, JavaScript
-- **Backend:** Python (Flask)
-- **Libraries:**
-  - pdf-lib
-  - pdf.js
+3. **Create the `uploads` directory:**
+   The application requires an `uploads` directory to store the files that you upload. Create this directory in the root of the project:
+   ```bash
+   mkdir uploads
+   ```
+
+## Running the Project
+
+To run the project, execute the `app.py` file from the root of the project directory:
+
+```bash
+python app.py
+```
+
+The application will be available at `http://127.0.0.1:5000` in your web browser.
