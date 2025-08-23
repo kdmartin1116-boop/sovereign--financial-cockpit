@@ -1,0 +1,330 @@
+/* --- THEME VARIABLES --- */
+:root {
+  --bg-color: #f4f4f9;
+  --text-color: #333;
+  --header-color: #2c3e50;
+  --section-bg: #ffffff;
+  --border-color: #ddd;
+  --button-bg: #3498db;
+  --button-text: #ffffff;
+  --button-hover-bg: #2980b9;
+  --input-bg: #fdfdfe;
+  --input-border: #bdc3c7;
+  --link-color: #2980b9;
+  --status-error-color: #d32f2f;
+  --status-success-color: #388e3c;
+  --status-info-color: #1976d2;
+  --status-warning-color: #f39c12;
+  --text-muted-color: #555;
+  --loop-active-bg: #27ae60;
+  --loop-inactive-bg: #bdc3c7;
+  --canvas-border: #95a5a6;
+  --fieldset-border: #ccc;
+}
+
+body.dark-mode {
+  --bg-color: #2c3e50;
+  --text-color: #ecf0f1;
+  --header-color: #ffffff;
+  --section-bg: #34495e;
+  --border-color: #4a627a;
+  --button-bg: #3498db;
+  --button-text: #ffffff;
+  --button-hover-bg: #5dade2;
+  --input-bg: #2c3e50;
+  --input-border: #5d6d7e;
+  --link-color: #5dade2;
+  --status-error-color: #e57373;
+  --status-success-color: #81c784;
+  --status-info-color: #64b5f6;
+  --status-warning-color: #f5b041;
+  --text-muted-color: #bdc3c7;
+  --loop-active-bg: #2ecc71;
+  --loop-inactive-bg: #7f8c8d;
+  --canvas-border: #7f8c8d;
+  --fieldset-border: #566573;
+}
+
+/* --- GENERAL STYLES --- */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  margin: 0;
+  padding: 20px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--header-color);
+  margin-top: 0;
+}
+
+h1 { text-align: center; }
+
+section {
+  background-color: var(--section-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+fieldset {
+  border: 1px solid var(--fieldset-border);
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+legend {
+  font-weight: bold;
+  padding: 0 10px;
+  color: var(--header-color);
+}
+
+button {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s;
+}
+
+button:disabled {
+    background-color: var(--loop-inactive-bg);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+button:hover:not(:disabled) {
+  background-color: var(--button-hover-bg);
+}
+
+input[type="text"], input[type="file"], select {
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-color);
+  padding: 8px;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+canvas {
+  background-color: var(--section-bg); /* Ensure canvas bg matches theme */
+  border: 2px dashed var(--canvas-border);
+  margin-top: 15px;
+  max-width: 100%;
+  height: auto;
+}
+
+/* --- LOADER --- */
+#canvas-container {
+  position: relative;
+  min-height: 100px; /* Prevent container collapse before canvas is rendered */
+}
+
+.loader {
+  border: 8px solid var(--loop-inactive-bg);
+  border-top: 8px solid var(--button-bg);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* --- SOVEREIGN LOOP --- */
+#sovereign-loop ol {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  justify-content: space-around;
+}
+#sovereign-loop li {
+  padding: 10px 20px;
+  background-color: var(--loop-inactive-bg);
+  color: white;
+  border-radius: 20px;
+  transition: background-color 0.3s;
+}
+#sovereign-loop li.active {
+  background-color: var(--loop-active-bg);
+  font-weight: bold;
+}
+
+/* --- THEME TOGGLE SWITCH --- */
+#controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+.theme-switch input { display: none; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 28px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px; width: 20px;
+  left: 4px; bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider { background-color: var(--button-bg); }
+input:checked + .slider:before { transform: translateX(22px); }
+
+/* --- DYNAMIC RESULTS STYLING --- */
+#scanResults, #fcraResults {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+}
+#scanResults:not(:empty), #fcraResults:not(:empty) {
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+}
+
+/* --- FDCPA Log Display --- */
+#fdcpaLogDisplay ul {
+    list-style-type: none;
+    padding: 0;
+}
+#fdcpaLogDisplay li {
+    background-color: var(--bg-color); /* Use main bg for contrast */
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--status-warning-color);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+/* --- UTILITY & DYNAMIC CONTENT CLASSES --- */
+.text-success { color: var(--status-success-color); }
+.text-error { color: var(--status-error-color); }
+.text-muted {
+    font-size: 0.9em;
+    color: var(--text-muted-color);
+}
+
+.result-item {
+    margin-bottom: 10px;
+    padding-left: 8px;
+    list-style-type: none; /* Ensure no bullets appear */
+}
+.result-item.success { border-left: 3px solid var(--status-success-color); }
+.result-item.error { border-left: 3px solid var(--status-error-color); }
+.result-item.info { border-left: 3px solid var(--status-info-color); }
+.result-item.warning { border-left: 3px solid var(--status-warning-color); }/* In style.css */
+.hidden {
+  display: none !important;
+}
+
+/* Ensure the loader-overlay has a flex display by default */
+.loader-overlay {
+/* Add this to your style.css */
+.suggestion-text {
+  font-size: 0.8em;
+  margin-left: 10px;
+  font-style: italic;
+}
+/* Add this to the end of your style.css */
+
+#instrumentLog ul {
+  padding-left: 20px;
+}
+
+#instrumentLog li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+#instrumentLog li:hover {
+  background-color: var(--background-color-offset);
+}
+
+.log-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  margin-left: 8px;
+  padding: 2px 4px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.log-actions button:hover {
+  opacity: 1;
+}
+
+.edit-container {
+  display: flex;
+  width: 100%;
+}
+
+.edit-log-input {
+  flex-grow: 1;
+  margin-right: 8px;
+}
+/* Add to style.css */
+.tooltip {
+  position: absolute;
+  background-color: var(--background-color-offset);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 100;
+  max-width: 300px;
+  font-size: 0.9em;
+  pointer-events: none; /* So it doesn't interfere with mouse events */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(44, 62, 80, 0.7); /* Aligns with dark theme */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
