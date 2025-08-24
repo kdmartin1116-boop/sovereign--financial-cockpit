@@ -1,17 +1,21 @@
-# Ignore node_modules
-node_modules/
 
-# Ignore .env files
-.env
-
-# Ignore log files
-*.log
-
-# Ignore virtual environment
-.venv/
-
-# Ignore python cache
+# Python
 __pycache__/
-
-# Ignore config directory
-config/
+*.pyc
+*.pyd
+*.pyo
+.Python
+env/
+.venv/
+venv/
+# Flask instance folder
+instance/
+# Environment variables
+.env
+.flaskenv
+# Uploaded files
+uploads/
+# Logs
+*.log
+# IDE-specific files (example for VS Code)
+.vscode/
