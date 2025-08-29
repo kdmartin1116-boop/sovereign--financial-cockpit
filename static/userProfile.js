@@ -1,4 +1,6 @@
-class UserProfileModule {
+import { CONSTANTS } from './constants.js';
+
+export class UserProfile {
     constructor(appState, utils) {
         this.appState = appState;
         this.utils = utils;
@@ -17,7 +19,7 @@ class UserProfileModule {
     }
 
     loadProfile() {
-        const profile = this.appState.userProfile;
+        const profile = this.appState.getState().userProfile;
         if (profile) {
             this.userNameInput.value = profile.name || '';
             this.userAddressInput.value = profile.address || '';
@@ -33,8 +35,8 @@ class UserProfileModule {
             return;
         }
 
-        this.appState.userProfile = { name, address };
-        localStorage.setItem('userProfile', JSON.stringify(this.appState.userProfile));
+        this.appState.updateState({ userProfile: { name, address } });
+        localStorage.setItem(CONSTANTS.LOCAL_STORAGE.USER_PROFILE, JSON.stringify({ name, address }));
         this.utils.setStatus('User profile saved successfully.', false, true);
         this.utils.logAction('User profile updated.');
     }

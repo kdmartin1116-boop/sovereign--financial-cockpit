@@ -1,9 +1,11 @@
-class FdcpaLogger {
-    constructor(appState, knowledgeBase, utils) {
+import { CONSTANTS } from './constants.js';
+
+export class FDCPA_Logger {
+    constructor(appState, knowledgeBase, utils, creditorManager) {
         this.appState = appState;
         this.knowledgeBase = knowledgeBase;
         this.utils = utils;
-        this.log = this.appState.fdcpaLog;
+        this.creditorManager = creditorManager; // For accessing creditors
         this.letterContent = '';
 
         // DOM Elements
@@ -20,19 +22,19 @@ class FdcpaLogger {
         this.suggestionConfidenceEl = document.getElementById('fdcpaSuggestionConfidence');
 
         // Cease & Desist Form
-        this.fdcpaUserName = document.getElementById('fdcpaUserName');
-        this.fdcpaUserAddress = document.getElementById('fdcpaUserAddress');
+        this.generateBtn = document.getElementById('generateCeaseDesistBtn');
+        this.copyBtn = document.getElementById('copyCeaseDesistBtn');
         this.fdcpaCollectorName = document.getElementById('fdcpaCollectorName');
         this.fdcpaCollectorAddress = document.getElementById('fdcpaCollectorAddress');
         this.fdcpaAccountNumber = document.getElementById('fdcpaAccountNumber');
-        this.generateBtn = document.getElementById('generateCeaseDesistBtn');
-        this.copyBtn = document.getElementById('copyCeaseDesistBtn');
+
 
         this.init();
     }
 
     init() {
         this.populateViolationTypes();
+        this.renderLog();
         this.logBtn.addEventListener('click', () => this.logViolation());
         this.prepareBtn.addEventListener('click', () => this.prepareCeaseAndDesist());
         this.generateBtn.addEventListener('click', () => this.generateCeaseAndDesist());
@@ -69,7 +71,7 @@ class FdcpaLogger {
             const violation = violations[key];
             if (violation.keywords && Array.isArray(violation.keywords)) {
                 for (const keyword of violation.keywords) {
-                    const regex = new RegExp(`\\b${keyword.toLowerCase()}\\b`);
+                    const regex = new RegExp(`\b${keyword.toLowerCase()}\b`);
                     if (regex.test(description)) {
                         scores[key]++;
                     }
@@ -107,8 +109,10 @@ class FdcpaLogger {
             return;
         }
 
-        this.log.push(newLog);
-        localStorage.setItem('fdcpaLog', JSON.stringify(this.log));
+        const currentState = this.appState.getState();
+        const updatedLog = [...currentState.fdcpaLog, newLog];
+        this.appState.updateState({ fdcpaLog: updatedLog });
+        localStorage.setItem(CONSTANTS.LOCAL_STORAGE.FDCPA_LOG, JSON.stringify(updatedLog));
         this.renderLog();
         this.utils.logAction(`FDCPA violation logged for ${newLog.collector}.`);
 
@@ -119,13 +123,14 @@ class FdcpaLogger {
     }
 
     renderLog() {
-        if (this.log.length === 0) {
+        const currentState = this.appState.getState();
+        if (currentState.fdcpaLog.length === 0) {
             this.logDisplay.innerHTML = '<p class="text-muted">No violations logged yet.</p>';
             this.prepareBtn.disabled = true;
             return;
         }
 
-        const list = this.log.map(item => `
+        const list = currentState.fdcpaLog.map(item => `
             <li>
                 <strong>${item.date} - ${this.knowledgeBase.FDCPA.violations[item.type].summary}</strong><br>
                 <em>Collector:</em> ${item.collector}<br>
@@ -140,13 +145,14 @@ class FdcpaLogger {
     prepareCeaseAndDesist() {
         this.actionDetailsEl.classList.toggle('hidden');
         if (!this.actionDetailsEl.classList.contains('hidden')) {
-            const lastLog = this.log[this.log.length - 1];
+            const currentState = this.appState.getState();
+            const lastLog = currentState.fdcpaLog[currentState.fdcpaLog.length - 1];
             if (lastLog) {
                 const collectorName = lastLog.collector;
                 this.fdcpaCollectorName.value = collectorName;
 
                 // Auto-fill address from address book if found
-                const knownCreditor = this.appState.creditors.find(c => c.name.toLowerCase() === collectorName.toLowerCase());
+                const knownCreditor = currentState.creditors.find(c => c.name.toLowerCase() === collectorName.toLowerCase());
                 if (knownCreditor) {
                     this.fdcpaCollectorAddress.value = knownCreditor.address;
                     this.utils.setStatus(`Address for ${collectorName} auto-filled from address book.`, false);
@@ -156,9 +162,10 @@ class FdcpaLogger {
     }
 
     _getCeaseAndDesistLetterText() {
+        const currentState = this.appState.getState();
         const details = {
-            userName: this.fdcpaUserName.value.trim(),
-            userAddress: this.fdcpaUserAddress.value.trim(),
+            userName: currentState.userProfile.name,
+            userAddress: currentState.userProfile.address,
             collectorName: this.fdcpaCollectorName.value.trim(),
             collectorAddress: this.fdcpaCollectorAddress.value.trim(),
             accountNumber: this.fdcpaAccountNumber.value.trim(),
@@ -217,7 +224,8 @@ ${details.userName}
     }
 
     reset() {
-        this.log = [];
+        this.appState.updateState({ fdcpaLog: [] });
+        localStorage.removeItem(CONSTANTS.LOCAL_STORAGE.FDCPA_LOG);
         this.actionDetailsEl.classList.add('hidden');
         this.renderLog();
     }

@@ -1,9 +1,8 @@
 import argparse
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from io import BytesIO
-import os
 
 # Parse arguments
 parser = argparse.ArgumentParser()

@@ -1,4 +1,4 @@
-class CreditReportAnalysisModule {
+export class CreditReportAnalysis {
     constructor(appState, knowledgeBase, utils) {
         this.appState = appState;
         this.knowledgeBase = knowledgeBase;
@@ -41,7 +41,7 @@ class CreditReportAnalysisModule {
         if (this.letterContent) return this.letterContent;
 
         // Pull user info from the central user profile state
-        const { name: userName, address: userAddress } = this.appState.userProfile;
+        const { name: userName, address: userAddress } = this.appState.getState().userProfile;
         const accountNumber = this.accountInput.value.trim();
         const reason = this.reasonInput.value.trim();
         const violationKey = this.violationSelect.value;

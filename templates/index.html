@@ -21,6 +21,12 @@
         <label for="themeToggle" style="cursor: pointer;">Dark Mode</label>
     </div>
     <button id="resetAppBtn">Reset Application</button>
+    <fieldset>
+      <legend>Configuration</legend>
+      <label for="sovereignOverlayConfigPath">Sovereign Overlay Config Path:</label>
+      <input type="text" id="sovereignOverlayConfigPath" placeholder="e.g., config/sovereign_overlay.yaml">
+      <button id="saveConfigPathBtn">Save Config Path</button>
+    </fieldset>
   </section>
 
   <!-- 👤 User Profile Panel -->
@@ -171,6 +177,9 @@
         <option value="Accepted for Value" data-kb-key="AcceptedForValue">Accepted for Value (Controversial)</option>
       </select>
       <div id="qualifier-tooltip" class="tooltip hidden"></div>
+      <div id="acceptedForValueWarning" class="warning-message hidden">
+        <strong>Warning:</strong> "Accepted for Value" is a controversial theory not recognized in mainstream commercial law and can carry legal risks. Proceed with caution.
+      </div>
     </fieldset>
     <fieldset id="finalize-fieldset">
       <legend>3. Finalize & Export</legend>
@@ -212,18 +221,6 @@
     </ol>
   </section>
 
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-</script>
-  <script src="{{ url_for('static', filename='knowledgeBase.js') }}"></script>
-  <script src="{{ url_for('static', filename='creditorManager.js') }}"></script>
-  <script src="{{ url_for('static', filename='userProfile.js') }}"></script>
-  <script src="{{ url_for('static', filename='vehicleFinancing.js') }}"></script>
-  <script src="{{ url_for('static', filename='billEndorsement.js') }}"></script>
-  <script src="{{ url_for('static', filename='creditReportAnalysis.js') }}"></script>
-  <script src="{{ url_for('static', filename='fdcpaLogger.js') }}"></script>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='dist/assets/main-DlXsi8e3.js') }}"></script>
 </body>
 </html>

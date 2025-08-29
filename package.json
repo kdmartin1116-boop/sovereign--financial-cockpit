@@ -1,0 +1,26 @@
+{
+  "name": "sovereign-finance-cockpit",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Sovereign Finance Cockpit is a web-based application designed to empower individuals to take control of their financial sovereignty. It provides a suite of tools to analyze financial documents, generate legal remedies, and manage interactions with creditors and debt collectors. The project is built on the philosophy that every individual has the right to understand and manage their financial affairs, and to seek remedy for any injustices they may face.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.54"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5",
+    "vite-plugin-static-copy": "^3.1.2"
+  }
+}
