@@ -20,6 +20,11 @@ export class BillEndorsement {
         this.saveBtn = document.getElementById('saveEndorsementBtn');
         this.validateNegoBtn = document.getElementById('validateNegotiabilityBtn');
         this.nonNegoBtn = document.getElementById('generateNonNegotiableNoticeBtn');
+        this.nonNegoContainer = document.getElementById('nonNegotiableNoticeContainer');
+        this.nonNegoText = document.getElementById('nonNegotiableNoticeText');
+        this.copyNoticeBtn = document.getElementById('copyNoticeBtn');
+        this.downloadNoticeBtn = document.getElementById('downloadNoticeBtn');
+
 
         this.init();
     }
@@ -30,6 +35,8 @@ export class BillEndorsement {
         this.saveBtn.addEventListener('click', () => this.stampEndorsement());
         this.nonNegoBtn.addEventListener('click', () => this.generateNonNegotiableNotice());
         this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+        this.copyNoticeBtn.addEventListener('click', () => this.copyNotice());
+        this.downloadNoticeBtn.addEventListener('click', () => this.downloadNotice());
 
         this.billUploadInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
@@ -277,7 +284,7 @@ export class BillEndorsement {
             }
 
             // UCC 3-104(a) - Fixed Amount
-            if (/\$\s?[\d,]+(\.\d{2})?/.test(text)) {
+            if (/$\\s?[\d,]+(\\.\\d{2})?\b/.test(text)) {
                  successes.push('Specifies a fixed amount of money.');
             } else {
                 failures.push('Does not appear to specify a fixed amount of money (e.g., $1,234.56).');
@@ -318,7 +325,63 @@ export class BillEndorsement {
             this.utils.hideLoader();
         }
     }
-    generateNonNegotiableNotice() { /* ... existing logic ... */ }
+    
+    generateNonNegotiableNotice() {
+        const currentState = this.appState.getState();
+        const { negotiabilityFailures, userProfile, billFile } = currentState;
+
+        if (!negotiabilityFailures || negotiabilityFailures.length === 0) {
+            this.utils.setStatus('No negotiability failures were found.', true);
+            return;
+        }
+
+        if (!userProfile || !userProfile.name || !userProfile.address) {
+            this.utils.setStatus('Please complete your user profile first.', true);
+            // Maybe highlight the profile section
+            return;
+        }
+        
+        const today = new Date().toLocaleDateString();
+        const failureList = negotiabilityFailures.map(f => `- ${f}`).join('\n');
+
+        const noticeText = `
+[${userProfile.name}]
+[${userProfile.address}]
+
+[${today}]
+
+TO: [Creditor Name and Address Here]
+
+NOTICE OF NON-NEGOTIABLE INSTRUMENT
+
+This letter is to inform you that the instrument titled "${billFile ? billFile.name : 'N/A'}" is not a negotiable instrument under the Uniform Commercial Code (UCC) for the following reasons:
+
+${failureList}
+
+This notice is to inform you of these defects. Any attempt to negotiate this instrument may be unlawful.
+
+Sincerely,
+
+${userProfile.name}
+        `.trim();
+
+        this.nonNegoText.value = noticeText;
+        this.nonNegoContainer.classList.remove('hidden');
+        this.utils.setStatus('Non-negotiable notice generated below.', false);
+        this.utils.logAction('Non-negotiable notice generated.');
+    }
+
+    copyNotice() {
+        this.nonNegoText.select();
+        document.execCommand('copy');
+        this.utils.setStatus('Notice copied to clipboard!', false, true);
+    }
+
+    downloadNotice() {
+        const text = this.nonNegoText.value;
+        const blob = new Blob([text], { type: 'text/plain' });
+        this.utils.generateDownload(blob, 'non-negotiable-notice.txt');
+    }
 
     resetEndorsementState() {
         this.saveBtn.disabled = true;
@@ -328,6 +391,7 @@ export class BillEndorsement {
             pdfViewport: null,
             negotiabilityFailures: null
         });
+        this.nonNegoContainer.classList.add('hidden');
     }
 
     reset(clearFiles = true) {

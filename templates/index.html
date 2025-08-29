@@ -187,6 +187,11 @@
       <button id="generateTenderLetterBtn" disabled>Generate Tender Letter</button>
       <button id="saveEndorsementBtn" disabled>Save Endorsed PDF</button>
       <button id="generateNonNegotiableNoticeBtn" class="hidden" title="Generate a notice detailing why the instrument is not negotiable.">Generate Non-Negotiable Notice</button>
+      <div id="nonNegotiableNoticeContainer" class="hidden">
+        <textarea id="nonNegotiableNoticeText" rows="10" readonly></textarea>
+        <button id="copyNoticeBtn">Copy Text</button>
+        <button id="downloadNoticeBtn">Download .txt</button>
+      </div>
     </fieldset>
     <div id="instrument-tracker">
       <h3>Instrument History Log</h3>
@@ -221,6 +226,6 @@
     </ol>
   </section>
 
-  <script type="module" src="{{ url_for('static', filename='dist/assets/main-DlXsi8e3.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='dist/assets/main-BauKMS_P.js') }}"></script>
 </body>
 </html>
