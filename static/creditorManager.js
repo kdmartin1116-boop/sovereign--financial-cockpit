@@ -1,4 +1,6 @@
-class CreditorManagerModule {
+import { CONSTANTS } from './constants.js';
+
+export class CreditorManager {
     constructor(appState, utils) {
         this.appState = appState;
         this.utils = utils;
@@ -38,7 +40,10 @@ class CreditorManagerModule {
             address
         };
 
-        this.appState.creditors.push(newCreditor);
+        const currentState = this.appState.getState();
+        const updatedCreditors = [...currentState.creditors, newCreditor];
+        this.appState.updateState({ creditors: updatedCreditors });
+        
         this.saveAndRerender();
         this.utils.logAction(`Creditor added: ${name}`);
         this.nameInput.value = '';
@@ -46,28 +51,31 @@ class CreditorManagerModule {
     }
 
     deleteCreditor(id) {
-        const creditor = this.appState.creditors.find(c => c.id === id);
+        const currentState = this.appState.getState();
+        const creditor = currentState.creditors.find(c => c.id === id);
         if (creditor && confirm(`Are you sure you want to delete ${creditor.name}?`)) {
-            this.appState.creditors = this.appState.creditors.filter(c => c.id !== id);
+            const updatedCreditors = currentState.creditors.filter(c => c.id !== id);
+            this.appState.updateState({ creditors: updatedCreditors });
             this.saveAndRerender();
             this.utils.logAction(`Creditor deleted: ${creditor.name}`);
         }
     }
 
     saveAndRerender() {
-        localStorage.setItem('sovereignCreditors', JSON.stringify(this.appState.creditors));
+        const currentState = this.appState.getState();
+        localStorage.setItem(CONSTANTS.LOCAL_STORAGE.CREDITORS, JSON.stringify(currentState.creditors));
         this.renderCreditorList();
-        // Dispatch a global event that other modules can listen to
         document.dispatchEvent(new CustomEvent('creditorsUpdated'));
     }
 
     renderCreditorList() {
-        if (this.appState.creditors.length === 0) {
+        const currentState = this.appState.getState();
+        if (currentState.creditors.length === 0) {
             this.creditorListEl.innerHTML = '<p class="text-muted">No creditors saved yet.</p>';
             return;
         }
 
-        this.creditorListEl.innerHTML = `<ul>${this.appState.creditors.map(c => `
+        this.creditorListEl.innerHTML = `<ul>${currentState.creditors.map(c => `
             <li>
                 <div><strong>${c.name}</strong><br><small>${c.address}</small></div>
                 <button class="delete-creditor-btn" data-id="${c.id}" title="Delete Creditor">🗑️</button>

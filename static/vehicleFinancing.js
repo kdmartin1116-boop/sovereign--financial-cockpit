@@ -1,4 +1,6 @@
-class VehicleFinancingModule {
+import { getDocument } from 'pdfjs-dist/build/pdf.mjs';
+
+export class VehicleFinancingModule {
     constructor(appState, knowledgeBase, utils) {
         this.appState = appState;
         this.knowledgeBase = knowledgeBase;
@@ -34,7 +36,7 @@ class VehicleFinancingModule {
 
         this.contractInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
-                this.appState.vehicleContractFile = e.target.files[0];
+                this.appState.updateState({ vehicleContractFile: e.target.files[0] });
                 this.utils.logAction('Vehicle contract uploaded.');
             }
         });
@@ -46,6 +48,14 @@ class VehicleFinancingModule {
 
     _getRemedyLetterText() {
         if (this.letterContent) return this.letterContent;
+        
+        const currentState = this.appState.getState();
+        const { name: userName, address: userAddress } = currentState.userProfile;
+
+        if (!userName || !userAddress) {
+            this.utils.setStatus('Please save your name and address in the User Profile section first.', true);
+            return null;
+        }
 
         const details = {
             userName: this.tilaUserName.value.trim(),
@@ -65,7 +75,7 @@ class VehicleFinancingModule {
             }
         }
 
-        const missingTerms = this.appState.tilaMissingTerms || ['required disclosures'];
+        const missingTerms = currentState.tilaMissingTerms || ['required disclosures'];
         const missingTermsString = missingTerms.join(', ');
 
         const letter = `
@@ -128,7 +138,8 @@ ${details.userName}
 
     async _getPdfText(file) {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const typedarray = new Uint8Array(arrayBuffer);
+        const pdf = await getDocument(typedarray).promise;
         let textContent = '';
         for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
@@ -139,7 +150,28 @@ ${details.userName}
     }
 
     async validateTilaDisclosures() {
-        // ... (This function remains the same)
+        const currentState = this.appState.getState();
+        if (!currentState.vehicleContractFile) {
+            this.utils.setStatus('Please upload a vehicle contract first.', true);
+            return;
+        }
+        this.utils.setStatus('Analyzing TILA disclosures...');
+        const pdfText = await this._getPdfText(currentState.vehicleContractFile);
+        if (!pdfText) return;
+
+        // This is a simplified check. A real implementation would be more robust.
+        const requiredTerms = ['annual percentage rate', 'finance charge', 'amount financed', 'total of payments'];
+        const missing = requiredTerms.filter(term => !pdfText.includes(term));
+
+        if (missing.length > 0) {
+            this.appState.updateState({ tilaMissingTerms: missing });
+            this.utils.setStatus(`Missing TILA disclosures: ${missing.join(', ')}`, true);
+            this.remedyDetailsEl.classList.remove('hidden');
+        } else {
+            this.appState.updateState({ tilaMissingTerms: [] });
+            this.utils.setStatus('All required TILA disclosures appear to be present.', false, true);
+            this.remedyDetailsEl.classList.add('hidden');
+        }
     }
 
     async scanForTerms() {
@@ -149,12 +181,12 @@ ${details.userName}
     reset(clearFiles = true) {
         if (clearFiles) {
             this.contractInput.value = '';
-            this.appState.vehicleContractFile = null;
+            this.appState.updateState({ vehicleContractFile: null });
         }
         this.scanResultsEl.innerHTML = '';
         this.remedyDetailsEl.classList.add('hidden');
         this.remedyDetailsEl.querySelectorAll('input').forEach(input => input.value = '');
         this.letterContent = '';
-        delete this.appState.tilaMissingTerms;
+        this.appState.updateState({ tilaMissingTerms: null });
     }
 }

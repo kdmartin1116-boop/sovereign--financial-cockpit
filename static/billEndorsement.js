@@ -1,4 +1,6 @@
-class BillEndorsementModule {
+import { getDocument } from 'pdfjs-dist/build/pdf.mjs';
+
+export class BillEndorsement {
     constructor(appState, knowledgeBase, utils) {
         this.appState = appState;
         this.knowledgeBase = knowledgeBase;
@@ -14,6 +16,7 @@ class BillEndorsementModule {
         this.endorsementText = document.getElementById('endorsementText');
         this.qualifierSelect = document.getElementById('qualifier');
         this.qualifierTooltip = document.getElementById('qualifier-tooltip');
+        this.acceptedForValueWarning = document.getElementById('acceptedForValueWarning');
         this.saveBtn = document.getElementById('saveEndorsementBtn');
         this.validateNegoBtn = document.getElementById('validateNegotiabilityBtn');
         this.nonNegoBtn = document.getElementById('generateNonNegotiableNoticeBtn');
@@ -24,13 +27,13 @@ class BillEndorsementModule {
     init() {
         this.renderPreviewBtn.addEventListener('click', () => this.renderPdfPreview());
         this.validateNegoBtn.addEventListener('click', () => this.validateNegotiability());
-        this.canvas.addEventListener('click', (e) => this.placeEndorsement(e));
-        this.saveBtn.addEventListener('click', () => this.saveEndorsedPdf());
+        this.saveBtn.addEventListener('click', () => this.stampEndorsement());
         this.nonNegoBtn.addEventListener('click', () => this.generateNonNegotiableNotice());
+        this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
 
         this.billUploadInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
-                this.appState.billFile = e.target.files[0];
+                this.appState.updateState({ billFile: e.target.files[0] });
                 this.utils.logAction('Bill/instrument uploaded.');
                 this.endorsementFieldset.disabled = false;
                 this.resetEndorsementState();
@@ -44,20 +47,115 @@ class BillEndorsementModule {
         this.qualifierSelect.addEventListener('change', () => this.showQualifierTooltip()); // Update tooltip on change
     }
 
+    handleCanvasClick(e) {
+        const currentState = this.appState.getState();
+        if (!currentState.pdfPage) {
+            this.utils.setStatus('Please render a PDF preview first.', true);
+            return;
+        }
+
+        const endorsementText = this.endorsementText.value.trim();
+        if (!endorsementText) {
+            this.utils.setStatus('Please enter endorsement text before selecting a position.', true);
+            return;
+        }
+
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Convert view coordinates to PDF coordinates
+        const pdfPoint = currentState.pdfViewport.convertToPdfPoint(x, y);
+
+        this.appState.updateState({ endorsementCoords: { x: pdfPoint[0], y: pdfPoint[1] } });
+
+        this.utils.setStatus(`Endorsement position set. Ready to save.`, false);
+        this.utils.logAction(`Endorsement position selected.`);
+        this.saveBtn.disabled = false;
+
+        // Re-render the PDF to clear previous drawings, then draw the new text
+        this.renderPdfPreview().then(() => {
+            this.ctx.fillStyle = 'rgba(200, 0, 0, 0.8)';
+            this.ctx.font = '10px sans-serif';
+            // Add qualifier text
+            const qualifier = this.qualifierSelect.value;
+            const fullText = `${endorsementText} - ${qualifier}`;
+            this.ctx.fillText(fullText, x, y);
+        });
+    }
+
+    async stampEndorsement() {
+        const currentState = this.appState.getState();
+        if (!currentState.billFile || !currentState.endorsementCoords) {
+            this.utils.setStatus('Please upload a bill and select an endorsement position on the preview.', true);
+            return;
+        }
+
+        const endorsementText = this.endorsementText.value.trim();
+        const qualifier = this.qualifierSelect.value;
+
+        if (!endorsementText) {
+            this.utils.setStatus('Please enter endorsement text.', true);
+            return;
+        }
+
+        this.utils.showLoader();
+        this.utils.setStatus('Stamping endorsement...', false);
+
+        const formData = new FormData();
+        formData.append('bill', currentState.billFile);
+        formData.append('x', currentState.endorsementCoords.x);
+        formData.append('y', currentState.endorsementCoords.y);
+        formData.append('endorsement_text', endorsementText);
+        formData.append('qualifier', qualifier);
+
+        try {
+            const response = await fetch('/stamp_endorsement', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.error || 'An unknown error occurred during stamping.');
+            }
+
+            const blob = await response.blob();
+            this.utils.generateDownload(blob, `endorsed_${currentState.billFile.name}`);
+            this.utils.setStatus('Endorsement successful! Check your downloads.', false, true);
+            this.utils.logAction('Endorsement stamped and downloaded.');
+
+        } catch (error) {
+            console.error('Error stamping endorsement:', error);
+            this.utils.setStatus(`Error: ${error.message}`, true);
+        } finally {
+            this.utils.hideLoader();
+        }
+    }
+
     // --- Tooltip Methods ---
     showQualifierTooltip() {
         const selectedOption = this.qualifierSelect.options[this.qualifierSelect.selectedIndex];
         const kbKey = selectedOption.dataset.kbKey;
 
+        // Hide previous warning if any
+        this.acceptedForValueWarning.classList.add('hidden');
+
         if (kbKey && this.knowledgeBase.Endorsements && this.knowledgeBase.Endorsements[kbKey]) {
             const info = this.knowledgeBase.Endorsements[kbKey];
             this.qualifierTooltip.innerHTML = `<strong>${info.summary}</strong><p>${info.detail}</p>`;
             this.qualifierTooltip.classList.remove('hidden');
+
+            // Show specific warning for "Accepted for Value"
+            if (kbKey === 'AcceptedForValue') {
+                this.acceptedForValueWarning.classList.remove('hidden');
+            }
         }
     }
 
     hideQualifierTooltip() {
         this.qualifierTooltip.classList.add('hidden');
+        this.acceptedForValueWarning.classList.add('hidden'); // Also hide the warning
     }
 
     moveQualifierTooltip(e) {
@@ -68,7 +166,8 @@ class BillEndorsementModule {
 
     // --- Core Module Methods ---
     async renderPdfPreview() {
-        if (!this.appState.billFile) {
+        const currentState = this.appState.getState();
+        if (!currentState.billFile) {
             this.utils.setStatus('Please upload a bill/instrument first.', true);
             return;
         }
@@ -77,20 +176,19 @@ class BillEndorsementModule {
         this.canvas.classList.add('hidden');
 
         try {
-            const arrayBuffer = await this.appState.billFile.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const arrayBuffer = await currentState.billFile.arrayBuffer();
+            const pdf = await getDocument({ data: arrayBuffer }).promise;
             const page = await pdf.getPage(1);
             
-            this.appState.pdfPage = page;
+            this.appState.updateState({ pdfPage: page });
             const viewport = page.getViewport({ scale: this.canvas.width / page.getViewport({ scale: 1.0 }).width });
-            this.appState.pdfViewport = viewport;
+            this.appState.updateState({ pdfViewport: viewport });
 
             this.canvas.height = viewport.height;
             const renderContext = { canvasContext: this.ctx, viewport: viewport };
             await page.render(renderContext).promise;
             this.utils.setStatus('Preview rendered. Click on the preview to place your endorsement.', false);
             this.utils.logAction('PDF preview rendered.');
-            this.resetEndorsementState();
         } catch (error) {
             console.error("Error rendering PDF:", error);
             this.utils.setStatus('Failed to render PDF. It might be corrupted or in an unsupported format.', true);
@@ -100,65 +198,43 @@ class BillEndorsementModule {
         }
     }
 
-    placeEndorsement(e) {
-        if (!this.appState.pdfPage || !this.appState.pdfViewport) {
-            this.utils.setStatus('Please render a preview first.', true);
-            return;
-        }
-
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        const renderContext = { canvasContext: this.ctx, viewport: this.appState.pdfViewport };
-        this.appState.pdfPage.render(renderContext).promise.then(() => {
-            const fullEndorsementText = `${this.endorsementText.value} ${this.qualifierSelect.value}`;
-            this.ctx.font = '12px Helvetica';
-            this.ctx.fillStyle = 'blue';
-            this.ctx.fillText(fullEndorsementText, x, y);
-        });
-
-        const pdfPoint = this.appState.pdfViewport.convertToPdfPoint(x, y);
-        this.appState.endorsementCoords = { x: pdfPoint[0], y: pdfPoint[1] };
-
-        this.utils.setStatus('Endorsement placed. You can now save the PDF.', false);
-        this.utils.logAction('Endorsement placed on preview.');
-        this.saveBtn.disabled = false;
-    }
-
-    async saveEndorsedPdf() {
-        if (!this.appState.billFile || !this.appState.endorsementCoords) {
-            this.utils.setStatus('Please upload a bill and place an endorsement on the preview first.', true);
+    async processBillOnBackend() {
+        const currentState = this.appState.getState();
+        if (!currentState.billFile) {
+            this.utils.setStatus('Please upload a bill/instrument first.', true);
             return;
         }
 
         this.utils.showLoader();
+        this.utils.setStatus('Processing bill on the server...', false);
+
+        const formData = new FormData();
+        formData.append('bill', currentState.billFile);
+
         try {
-            const { PDFDocument, rgb, StandardFonts } = PDFLib;
-
-            const existingPdfBytes = await this.appState.billFile.arrayBuffer();
-            const pdfDoc = await PDFDocument.load(existingPdfBytes);
-            const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-            const firstPage = pdfDoc.getPages()[0];
-
-            const fullEndorsementText = `${this.endorsementText.value} ${this.qualifierSelect.value}`;
-            const { x, y } = this.appState.endorsementCoords;
-
-            firstPage.drawText(fullEndorsementText, {
-                x,
-                y,
-                font: helveticaFont,
-                size: 12,
-                color: rgb(0, 0, 0),
+            const response = await fetch('/endorse-bill', {
+                method: 'POST',
+                body: formData,
             });
 
-            const pdfBytes = await pdfDoc.save();
-            this.utils.generateDownload(pdfBytes, `${this.appState.billFile.name.replace(/\.pdf$/i, '')}_endorsed.pdf`, 'application/pdf');
-            this.utils.logAction('Endorsed PDF saved.');
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'An unknown error occurred.');
+            }
+
+            this.utils.setStatus(result.message || 'Bill processed successfully!', false);
+            this.utils.logAction('Backend processing complete.');
+            
+            // Optionally, provide download links for the endorsed files
+            if (result.endorsed_files && result.endorsed_files.length > 0) {
+                this.utils.logAction(`Endorsed files created: ${result.endorsed_files.join(', ')}`);
+                // Here you could add logic to display download links to the user
+            }
 
         } catch (error) {
-            console.error('Error saving endorsed PDF:', error);
-            this.utils.setStatus('An error occurred while saving the PDF.', true);
+            console.error('Error processing bill:', error);
+            this.utils.setStatus(`Error: ${error.message}`, true);
         } finally {
             this.utils.hideLoader();
         }
@@ -167,7 +243,7 @@ class BillEndorsementModule {
     async _getPDFText(file) {
         if (!file) return '';
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pdf = await getDocument({ data: arrayBuffer }).promise;
         let fullText = '';
         for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
@@ -177,21 +253,87 @@ class BillEndorsementModule {
         return fullText.toLowerCase();
     }
 
-    async validateNegotiability() { /* ... existing logic ... */ }
+    async validateNegotiability() {
+        this.utils.showLoader();
+        this.utils.setStatus('Analyzing instrument for negotiability...', false);
+
+        const currentState = this.appState.getState();
+        if (!currentState.billFile) {
+            this.utils.setStatus('Please upload a bill/instrument first.', true);
+            this.utils.hideLoader();
+            return;
+        }
+
+        try {
+            const text = await this._getPDFText(currentState.billFile);
+            const failures = [];
+            const successes = [];
+
+            // UCC 3-104(a) - The "Magic Words"
+            if (text.includes('pay to the order of') || text.includes('pay to bearer')) {
+                successes.push('Contains promise to pay to order or bearer.');
+            } else {
+                failures.push('Missing "Pay to the order of" or "Pay to bearer" language.');
+            }
+
+            // UCC 3-104(a) - Fixed Amount
+            if (/\$\s?[\d,]+(\.\d{2})?/.test(text)) {
+                 successes.push('Specifies a fixed amount of money.');
+            } else {
+                failures.push('Does not appear to specify a fixed amount of money (e.g., $1,234.56).');
+            }
+
+            // UCC 3-104(a) - Unconditional Promise
+            if (!/subject to|governed by|as per/.test(text)) {
+                successes.push('The promise or order appears to be unconditional.');
+            } else {
+                failures.push('The promise or order may be conditional (contains "subject to", "governed by", etc.).');
+            }
+            
+            // UCC 3-104(a) - Payable on Demand or at a Definite Time
+            if (text.includes('on demand') || /\bon or before\b/.test(text) || /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/.test(text)) {
+                successes.push('Appears to be payable on demand or at a definite time.');
+            } else {
+                failures.push('Does not appear to be payable on demand or at a definite time.');
+            }
+
+            this.appState.updateState({ negotiabilityFailures: failures });
+
+            if (failures.length > 0) {
+                let failureList = failures.map(f => `<li>- ${f}</li>`).join('');
+                this.utils.setStatus(`<strong>Instrument may not be negotiable:</strong><ul>${failureList}</ul>`, true);
+                this.nonNegoBtn.classList.remove('hidden');
+                 this.utils.logAction('Validation failed.', { failures });
+            } else {
+                let successList = successes.map(s => `<li>- ${s}</li>`).join('');
+                this.utils.setStatus(`<strong>Instrument appears to be negotiable:</strong><ul>${successList}</ul>`, false, true);
+                this.nonNegoBtn.classList.add('hidden');
+                this.utils.logAction('Validation succeeded.', { successes });
+            }
+
+        } catch (error) {
+            console.error('Error validating negotiability:', error);
+            this.utils.setStatus('Could not analyze the document.', true);
+        } finally {
+            this.utils.hideLoader();
+        }
+    }
     generateNonNegotiableNotice() { /* ... existing logic ... */ }
 
     resetEndorsementState() {
         this.saveBtn.disabled = true;
-        delete this.appState.endorsementCoords;
-        delete this.appState.pdfPage;
-        delete this.appState.pdfViewport;
-        delete this.appState.negotiabilityFailures;
+        this.appState.updateState({
+            endorsementCoords: null,
+            pdfPage: null,
+            pdfViewport: null,
+            negotiabilityFailures: null
+        });
     }
 
     reset(clearFiles = true) {
         if (clearFiles) {
             this.billUploadInput.value = '';
-            this.appState.billFile = null;
+            this.appState.updateState({ billFile: null });
         }
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.endorsementFieldset.disabled = true;

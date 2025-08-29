@@ -23,8 +23,8 @@ done
 
 if ! command -v pdftotext &> /dev/null
 then
-    echo "Error: pdftotext is not installed. Cannot scan contract."
-    echo "Please install pdftotext to enable full functionality."
+    echo "Error: pdftotext is not installed. Cannot scan contract." >&2
+    echo "Please install pdftotext to enable full functionality." >&2
     exit 1
 fi
 

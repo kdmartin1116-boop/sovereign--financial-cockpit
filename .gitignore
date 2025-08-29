@@ -19,3 +19,9 @@ uploads/
 *.log
 # IDE-specific files (example for VS Code)
 .vscode/
+
+# Node
+node_modules/
+
+# Vite
+static/dist/
