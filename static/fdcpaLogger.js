@@ -5,7 +5,7 @@ export class FDCPA_Logger {
         this.appState = appState;
         this.knowledgeBase = knowledgeBase;
         this.utils = utils;
-        this.creditorManager = creditorManager; // For accessing creditors
+        this.creditorManager = creditorManager;
         this.letterContent = '';
 
         // DOM Elements
@@ -28,6 +28,12 @@ export class FDCPA_Logger {
         this.fdcpaCollectorAddress = document.getElementById('fdcpaCollectorAddress');
         this.fdcpaAccountNumber = document.getElementById('fdcpaAccountNumber');
 
+        // Modal elements
+        this.modal = document.getElementById('confirmationModal');
+        this.modalTitle = document.getElementById('modalTitle');
+        this.modalDetails = document.getElementById('modalDetails');
+        this.modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        this.modalCancelBtn = document.getElementById('modalCancelBtn');
 
         this.init();
     }
@@ -37,11 +43,39 @@ export class FDCPA_Logger {
         this.renderLog();
         this.logBtn.addEventListener('click', () => this.logViolation());
         this.prepareBtn.addEventListener('click', () => this.prepareCeaseAndDesist());
-        this.generateBtn.addEventListener('click', () => this.generateCeaseAndDesist());
-        this.copyBtn.addEventListener('click', () => this.copyCeaseAndDesist());
+        this.generateBtn.addEventListener('click', () => this.showConfirmation('generate'));
+        this.copyBtn.addEventListener('click', () => this.showConfirmation('copy'));
+        this.modalCancelBtn.addEventListener('click', () => this.hideModal());
 
-        // Add the new feature listener
         this.violationDescInput.addEventListener('input', () => this.suggestViolationType());
+    }
+
+    hideModal() {
+        this.modal.classList.add('hidden');
+        this.modalConfirmBtn.onclick = null;
+    }
+
+    showConfirmation(action) {
+        const letterText = this._getCeaseAndDesistLetterText();
+        if (!letterText) return; // Validation failed
+
+        this.modalTitle.textContent = 'Confirm Cease & Desist';
+        this.modalDetails.innerHTML = `
+            <p>You are about to create a Cease and Desist letter for:</p>
+            <p><strong>${this.fdcpaCollectorName.value.trim()}</strong></p>
+            <p>Please confirm you want to proceed.</p>
+        `;
+
+        this.modalConfirmBtn.onclick = () => {
+            if (action === 'generate') {
+                this.generateCeaseAndDesist(letterText);
+            } else if (action === 'copy') {
+                this.copyCeaseAndDesist(letterText);
+            }
+            this.hideModal();
+        };
+
+        this.modal.classList.remove('hidden');
     }
 
     populateViolationTypes() {
@@ -65,13 +99,12 @@ export class FDCPA_Logger {
         let bestMatch = { key: null, score: 0 };
         const violations = this.knowledgeBase.FDCPA.violations;
 
-        // Calculate scores for each violation type based on keyword matches
         for (const key in violations) {
             scores[key] = 0;
             const violation = violations[key];
             if (violation.keywords && Array.isArray(violation.keywords)) {
                 for (const keyword of violation.keywords) {
-                    const regex = new RegExp(`\b${keyword.toLowerCase()}\b`);
+                    const regex = new RegExp(`\\b${keyword.toLowerCase()}\\b`);
                     if (regex.test(description)) {
                         scores[key]++;
                     }
@@ -79,14 +112,12 @@ export class FDCPA_Logger {
             }
         }
 
-        // Find the violation with the highest score
         for (const key in scores) {
             if (scores[key] > bestMatch.score) {
                 bestMatch = { key, score: scores[key] };
             }
         }
 
-        // Update the UI if a confident match is found
         if (bestMatch.score > 0) {
             this.violationTypeSelect.value = bestMatch.key;
             this.suggestionConfidenceEl.textContent = `Suggestion (Confidence: ${bestMatch.score})`;
@@ -151,8 +182,7 @@ export class FDCPA_Logger {
                 const collectorName = lastLog.collector;
                 this.fdcpaCollectorName.value = collectorName;
 
-                // Auto-fill address from address book if found
-                const knownCreditor = currentState.creditors.find(c => c.name.toLowerCase() === collectorName.toLowerCase());
+                const knownCreditor = this.creditorManager.getCreditors().find(c => c.name.toLowerCase() === collectorName.toLowerCase());
                 if (knownCreditor) {
                     this.fdcpaCollectorAddress.value = knownCreditor.address;
                     this.utils.setStatus(`Address for ${collectorName} auto-filled from address book.`, false);
@@ -209,15 +239,13 @@ ${details.userName}
         `.trim();
     }
 
-    generateCeaseAndDesist() {
-        const letterText = this._getCeaseAndDesistLetterText();
+    generateCeaseAndDesist(letterText) {
         if (!letterText) return;
         this.utils.generateDownload(letterText, `Cease_and_Desist_${this.fdcpaCollectorName.value.trim().replace(/\s/g, '_')}.txt`);
         this.utils.logAction('Cease and Desist letter generated and downloaded.');
     }
 
-    copyCeaseAndDesist() {
-        const letterText = this._getCeaseAndDesistLetterText();
+    copyCeaseAndDesist(letterText) {
         if (!letterText) return;
         this.utils.copyToClipboard(letterText, 'Cease and Desist letter text copied to clipboard.');
         this.utils.logAction('Cease and Desist letter text copied.');

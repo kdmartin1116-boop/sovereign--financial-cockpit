@@ -5,6 +5,7 @@ export const CONSTANTS = {
         INSTRUMENT_HISTORY: 'sovereign-instrument-history',
         USER_PROFILE: 'sovereign-user-profile',
         THEME: 'sovereign-theme',
-        SOVEREIGN_OVERLAY_CONFIG_PATH_KEY: 'sovereign-overlay-config-path'
+        SOVEREIGN_OVERLAY_CONFIG_PATH_KEY: 'sovereign-overlay-config-path',
+        ACTIVE_TAB: 'sovereign_active_tab'
     }
 };

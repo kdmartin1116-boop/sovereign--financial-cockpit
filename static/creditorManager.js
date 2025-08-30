@@ -25,6 +25,10 @@ export class CreditorManager {
         this.renderCreditorList();
     }
 
+    getCreditors() {
+        return this.appState.getState().creditors;
+    }
+
     addCreditor() {
         const name = this.nameInput.value.trim();
         const address = this.addressInput.value.trim();

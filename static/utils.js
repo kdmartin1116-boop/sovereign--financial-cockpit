@@ -18,8 +18,11 @@ export class Utils {
     }
 
     setStatus(message, isError = false, isSuccess = false) {
+        if (isError) {
+            alert(`Error: ${message}`);
+        }
         if (!this.statusEl) return;
-        this.statusEl.textContent = message;
+        this.statusEl.innerHTML = message; // Use innerHTML to render the list
         if (isError) {
             this.statusEl.className = 'status-message error';
         } else if (isSuccess) {
