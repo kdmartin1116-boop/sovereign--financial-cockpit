@@ -55,6 +55,28 @@ export const KNOWLEDGE_BASE = {
             }
         }
     },
+    DenialReasons: {
+        "low_score": {
+            summary: "Low Credit Score",
+            keywords: ["credit score", "score is too low", "below our minimum requirements"]
+        },
+        "no_history": {
+            summary: "Insufficient Credit History",
+            keywords: ["insufficient credit history", "no credit file", "lack of credit history"]
+        },
+        "high_utilization": {
+            summary: "High Credit Utilization",
+            keywords: ["high credit utilization", "balances are too high", "proportion of loan balances"]
+        },
+        "late_payments": {
+            summary: "History of Late Payments",
+            keywords: ["late payments", "delinquent", "payment history"]
+        },
+        "too_many_inquiries": {
+            summary: "Too Many Recent Inquiries",
+            keywords: ["too many inquiries", "excessive applications", "number of inquiries"]
+        }
+    },
     // ... other knowledge base sections like FDCPA, FCRA, etc.
 
     Endorsements: {

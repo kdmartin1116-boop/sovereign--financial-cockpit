@@ -24,6 +24,11 @@ export class BillEndorsement {
         this.nonNegoText = document.getElementById('nonNegotiableNoticeText');
         this.copyNoticeBtn = document.getElementById('copyNoticeBtn');
         this.downloadNoticeBtn = document.getElementById('downloadNoticeBtn');
+        this.generateTenderLetterBtn = document.getElementById('generateTenderLetterBtn');
+        this.tenderLetterContainer = document.getElementById('tenderLetterContainer');
+        this.tenderLetterText = document.getElementById('tenderLetterText');
+        this.copyTenderLetterBtn = document.getElementById('copyTenderLetterBtn');
+        this.downloadTenderLetterBtn = document.getElementById('downloadTenderLetterBtn');
 
 
         this.init();
@@ -34,9 +39,12 @@ export class BillEndorsement {
         this.validateNegoBtn.addEventListener('click', () => this.validateNegotiability());
         this.saveBtn.addEventListener('click', () => this.stampEndorsement());
         this.nonNegoBtn.addEventListener('click', () => this.generateNonNegotiableNotice());
+        this.generateTenderLetterBtn.addEventListener('click', () => this.generateTenderLetter());
         this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
         this.copyNoticeBtn.addEventListener('click', () => this.copyNotice());
         this.downloadNoticeBtn.addEventListener('click', () => this.downloadNotice());
+        this.copyTenderLetterBtn.addEventListener('click', () => this.copyTenderLetter());
+        this.downloadTenderLetterBtn.addEventListener('click', () => this.downloadTenderLetter());
 
         this.billUploadInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
@@ -44,6 +52,7 @@ export class BillEndorsement {
                 this.utils.logAction('Bill/instrument uploaded.');
                 this.endorsementFieldset.disabled = false;
                 this.resetEndorsementState();
+                this.resetTenderLetterState(); // Reset tender letter state on new upload
             }
         });
 
@@ -310,11 +319,13 @@ export class BillEndorsement {
                 let failureList = failures.map(f => `<li>- ${f}</li>`).join('');
                 this.utils.setStatus(`<strong>Instrument may not be negotiable:</strong><ul>${failureList}</ul>`, true);
                 this.nonNegoBtn.classList.remove('hidden');
+                this.generateTenderLetterBtn.disabled = true; // Disable if not negotiable
                  this.utils.logAction('Validation failed.', { failures });
             } else {
                 let successList = successes.map(s => `<li>- ${s}</li>`).join('');
                 this.utils.setStatus(`<strong>Instrument appears to be negotiable:</strong><ul>${successList}</ul>`, false, true);
                 this.nonNegoBtn.classList.add('hidden');
+                this.generateTenderLetterBtn.disabled = false; // Enable if negotiable
                 this.utils.logAction('Validation succeeded.', { successes });
             }
 
@@ -403,5 +414,78 @@ ${userProfile.name}
         this.endorsementFieldset.disabled = true;
         this.nonNegoBtn.classList.add('hidden');
         this.resetEndorsementState();
+        this.resetTenderLetterState();
+    }
+
+    resetTenderLetterState() {
+        this.tenderLetterContainer.classList.add('hidden');
+        this.tenderLetterText.value = '';
+    }
+
+    async generateTenderLetter() {
+        const currentState = this.appState.getState();
+        const { userProfile, billFile } = currentState;
+
+        if (!userProfile || !userProfile.name || !userProfile.address) {
+            this.utils.setStatus('Please complete your user profile (Your Information) first.', true);
+            return;
+        }
+
+        if (!billFile) {
+            this.utils.setStatus('Please upload a bill/instrument first.', true);
+            return;
+        }
+
+        // For now, we'll use a placeholder for creditor info. In a real app, you'd select from saved creditors.
+        const creditorName = "[Creditor Name Here]";
+        const creditorAddress = "[Creditor Address Here]";
+
+        this.utils.showLoader();
+        this.utils.setStatus('Generating tender letter...', false);
+
+        try {
+            const response = await fetch('/generate_tender_letter', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userName: userProfile.name,
+                    userAddress: userProfile.address,
+                    creditorName: creditorName,
+                    creditorAddress: creditorAddress,
+                    billFileName: billFile.name,
+                }),
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.error || 'An unknown error occurred during tender letter generation.');
+            }
+
+            const result = await response.json();
+            this.tenderLetterText.value = result.letterContent;
+            this.tenderLetterContainer.classList.remove('hidden');
+            this.utils.setStatus('Tender letter generated below.', false, true);
+            this.utils.logAction('Tender letter generated.');
+
+        } catch (error) {
+            console.error('Error generating tender letter:', error);
+            this.utils.setStatus(`Error: ${error.message}`, true);
+        } finally {
+            this.utils.hideLoader();
+        }
+    }
+
+    copyTenderLetter() {
+        this.tenderLetterText.select();
+        document.execCommand('copy');
+        this.utils.setStatus('Tender letter copied to clipboard!', false, true);
+    }
+
+    downloadTenderLetter() {
+        const text = this.tenderLetterText.value;
+        const blob = new Blob([text], { type: 'text/plain' });
+        this.utils.generateDownload(blob, 'tender-letter.txt');
     }
 }

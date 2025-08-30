@@ -21,6 +21,8 @@ export class StateManager {
             fdcpaLog: savedFdcpaLog,
             vehicleContractFile: null,
             tilaMissingTerms: null,
+            denialLetterFile: null,
+            denialReason: null,
         };
     }
 

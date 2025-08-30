@@ -1,10 +1,11 @@
 import { getDocument } from 'pdfjs-dist/build/pdf.mjs';
 
 export class VehicleFinancingModule {
-    constructor(appState, knowledgeBase, utils) {
+    constructor(appState, knowledgeBase, utils, creditorManager) {
         this.appState = appState;
         this.knowledgeBase = knowledgeBase;
         this.utils = utils;
+        this.creditorManager = creditorManager;
         this.letterContent = ''; // To store the generated letter text
 
         // DOM Elements
@@ -15,8 +16,7 @@ export class VehicleFinancingModule {
         this.remedyDetailsEl = document.getElementById('tila-remedy-details');
 
         // TILA Remedy Form Elements
-        this.tilaUserName = document.getElementById('tilaUserName');
-        this.tilaUserAddress = document.getElementById('tilaUserAddress');
+        this.tilaCreditorSelect = document.getElementById('tilaCreditorSelect');
         this.tilaCreditorName = document.getElementById('tilaCreditorName');
         this.tilaCreditorAddress = document.getElementById('tilaCreditorAddress');
         this.tilaContractDate = document.getElementById('tilaContractDate');
@@ -41,9 +41,39 @@ export class VehicleFinancingModule {
             }
         });
 
+        // Listen for creditor updates
+        this.populateCreditors();
+        document.addEventListener('creditorsUpdated', () => this.populateCreditors());
+        this.tilaCreditorSelect.addEventListener('change', () => this.handleCreditorSelect());
+
         // Clear cached letter content if user modifies the details
-        const formInputs = this.remedyDetailsEl.querySelectorAll('input');
+        const formInputs = this.remedyDetailsEl.querySelectorAll('input, select');
         formInputs.forEach(input => input.addEventListener('input', () => { this.letterContent = ''; }));
+    }
+
+    populateCreditors() {
+        const creditors = this.creditorManager.getCreditors();
+        this.tilaCreditorSelect.innerHTML = '<option value="">Select a Creditor</option>';
+        creditors.forEach(creditor => {
+            const option = document.createElement('option');
+            option.value = creditor.id;
+            option.textContent = creditor.name;
+            this.tilaCreditorSelect.appendChild(option);
+        });
+    }
+
+    handleCreditorSelect() {
+        const creditorId = this.tilaCreditorSelect.value;
+        if (creditorId) {
+            const creditor = this.creditorManager.getCreditors().find(c => c.id == creditorId);
+            if (creditor) {
+                this.tilaCreditorName.value = creditor.name;
+                this.tilaCreditorAddress.value = creditor.address;
+            }
+        } else {
+            this.tilaCreditorName.value = '';
+            this.tilaCreditorAddress.value = '';
+        }
     }
 
     _getRemedyLetterText() {
@@ -57,11 +87,19 @@ export class VehicleFinancingModule {
             return null;
         }
 
+        const creditorName = this.tilaCreditorName.value.trim();
+        const creditorAddress = this.tilaCreditorAddress.value.trim();
+
+        if (!creditorName || !creditorAddress) {
+            this.utils.setStatus('Please enter the creditor name and address.', true);
+            return null;
+        }
+
         const details = {
-            userName: this.tilaUserName.value.trim(),
-            userAddress: this.tilaUserAddress.value.trim(),
-            creditorName: this.tilaCreditorName.value.trim(),
-            creditorAddress: this.tilaCreditorAddress.value.trim(),
+            userName,
+            userAddress,
+            creditorName,
+            creditorAddress,
             contractDate: this.tilaContractDate.value.trim(),
             vehicleInfo: this.tilaVehicleInfo.value.trim(),
             currentDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -175,7 +213,68 @@ ${details.userName}
     }
 
     async scanForTerms() {
-        this.utils.setStatus('Scanning for terms... (functionality to be implemented)');
+        const currentState = this.appState.getState();
+        if (!currentState.vehicleContractFile) {
+            this.utils.setStatus('Please upload a vehicle contract first.', true);
+            return;
+        }
+
+        const tag = document.getElementById('violationTags').value;
+        const formData = new FormData();
+        formData.append('file', currentState.vehicleContractFile);
+        formData.append('tag', tag);
+
+        this.utils.showLoader();
+        this.scanResultsEl.innerHTML = ''; // Clear previous results
+
+        try {
+            const response = await fetch('/scan-for-terms', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to scan document.');
+            }
+
+            const result = await response.json();
+            this.displayScanResults(result.found_clauses, tag);
+
+        } catch (error) {
+            console.error('Error scanning document:', error);
+            this.utils.setStatus(error.message, true);
+        } finally {
+            this.utils.hideLoader();
+        }
+    }
+
+    displayScanResults(clauses, tag) {
+        if (clauses.length === 0) {
+            this.scanResultsEl.innerHTML = `<p class="text-muted">No clauses containing keywords for "${tag}" were found.</p>`;
+            return;
+        }
+
+        const listItems = clauses.map(clause => `<li>${this.highlightKeywords(clause, tag)}</li>`).join('');
+        this.scanResultsEl.innerHTML = `
+            <h3>Scan Results for "${tag}"</h3>
+            <ul>${listItems}</ul>
+        `;
+    }
+
+    highlightKeywords(text, tag) {
+        const keywordMap = {
+            "hidden_fee": ["convenience fee", "service charge", "processing fee", "undisclosed", "surcharge"],
+            "misrepresentation": ["misrepresented", "misleading", "deceptive", "false statement", "inaccurate"],
+            "arbitration": ["arbitration", "arbitrator", "binding arbitration", "waive your right to"]
+        };
+        const keywords = keywordMap[tag] || [];
+        let highlightedText = text;
+        keywords.forEach(keyword => {
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            highlightedText = highlightedText.replace(regex, '<strong class="text-error">$1</strong>');
+        });
+        return highlightedText;
     }
 
     reset(clearFiles = true) {
