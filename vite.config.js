@@ -1,24 +1,21 @@
-
-import { defineConfig } from 'vite';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  plugins: [
-    viteStaticCopy({
-      targets: [
-        {
-          src: 'node_modules/pdfjs-dist/build/pdf.worker.mjs',
-          dest: '.'
-        }
-      ]
-    })
-  ],
+  plugins: [react()],
+  root: 'src', // React project root
+  base: '/static/', // Base public path when served in production
   build: {
-    manifest: true,
-    rollupOptions: {
-      input: 'static/main.js',
-    },
-    outDir: 'static/dist',
+    outDir: '../dist', // Output to 'dist' in the project root
     emptyOutDir: true,
   },
-});
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        
+      }
+    }
+  }
+})
