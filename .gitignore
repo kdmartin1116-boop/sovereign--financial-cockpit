@@ -1,4 +1,3 @@
-
 # Python
 __pycache__/
 *.pyc
@@ -25,3 +24,11 @@ node_modules/
 
 # Vite
 static/dist/
+dist/
+static/assets/
+
+# Database
+app_database.db
+
+# Duplicated project directory (likely from unzipping)
+sovereign--financial-cockpit/
