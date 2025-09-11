@@ -30,18 +30,12 @@ Sovereign Finance Cockpit is a web-based application designed to empower individ
    cd sovereign-financial-cockpit
    ```
 
-2. **Install backend dependencies:**
-   This project uses Python and Flask for the backend. You will need to have Python 3 installed. Install the required Python packages using pip:
+2. **Install dependencies:**
+   This project uses Python and Flask for the backend. You will need to have Python 3 installed. You can install Flask using pip:
    ```bash
-   pip install -r requirements.txt
+   pip install Flask
    ```
-
-3. **Install frontend dependencies and build:**
-   The frontend is built with React and Vite. You will need Node.js and npm (or yarn) installed.
-   ```bash
-   npm install
-   npm run build
-   ```
+   The frontend dependencies are included in the `index.html` file via CDNs, so no further installation is needed.
 
 3. **Create the `uploads` directory:**
    The application requires an `uploads` directory to store the files that you upload. Create this directory in the root of the project:
