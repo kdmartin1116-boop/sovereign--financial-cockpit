@@ -1,3 +1,4 @@
+import json
 from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
