@@ -10,8 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "express": "^5.1.0",
+    "pdfjs-dist": "^5.4.149",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "sqlite3": "^5.1.7",
+    "vite-plugin-static-copy": "^3.1.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
@@ -22,5 +26,14 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "vite": "^6.3.5"
-  }
+  },
+  "description": "## **Disclaimer**",
+  "main": "script.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

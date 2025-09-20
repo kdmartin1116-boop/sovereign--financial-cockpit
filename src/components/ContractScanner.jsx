@@ -42,17 +42,22 @@ function ContractScanner() {
     formData.append('tag', selectedTag);
 
     try {
-      const response = await fetch('/api/scan-contract', {
+      const response = await fetch('/scan-for-terms', {
         method: 'POST',
         body: formData,
       });
 
       const data = await response.json();
 
-      if (data.success) {
-        setScanResult(data.data.output);
+      if (!response.ok) {
+        throw new Error(data.error || 'Server error occurred.');
+      }
+
+      if (data.found_clauses) {
+        setScanResult(data.found_clauses);
       } else {
-        setError(data.message || 'An unknown error occurred during scan.');
+        // This case might be for a successful response but no clauses found, or an unexpected structure
+        setScanResult([]);
       }
     } catch (e) {
       setError(e.message || 'Network error occurred.');

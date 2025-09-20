@@ -41,17 +41,18 @@ function DocumentList() {
           method: 'DELETE',
         });
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorData = await response.json();
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         if (data.success) {
-          alert('Document deleted successfully!');
+          // alert('Document deleted successfully!'); // Removed alert
           fetchDocuments(); // Refresh the list
         } else {
-          alert(`Error deleting document: ${data.message}`);
+          setError(data.message || 'An unknown error occurred during deletion.');
         }
       } catch (e) {
-        alert(`Error deleting document: ${e.message}`);
+        setError(`Error deleting document: ${e.message}`);
       }
     }
   };

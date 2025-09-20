@@ -18,21 +18,19 @@ from modules.bill_parser import BillParser
 from modules.attach_endorsement_to_pdf import attach_endorsement_to_pdf_function, stamp_pdf_with_endorsement
 
 # Disable default static serving
-app = Flask(__name__, static_folder=None, template_folder='templates')
+app = Flask(__name__, static_folder='dist', template_folder='dist/src', static_url_path='/')
 
-# New route to serve files from the dist directory
-@app.route('/static/dist/<path:filename>')
-def serve_dist_files(filename):
-    return send_from_directory(app.root_path + '/static/dist', filename)
 
-# Explicitly serve the main static folder (for style.css etc.)
-@app.route('/static/<path:filename>', endpoint='static')
-def serve_static_files(filename):
-    return send_from_directory(app.root_path + '/static', filename)
 
 # --- CONFIGURATION ---
-# Load the private key from an environment variable for security
+# Load the private key from an environment variable for security or from file
 PRIVATE_KEY_PEM = os.environ.get("PRIVATE_KEY_PEM")
+if not PRIVATE_KEY_PEM:
+    try:
+        with open("config/private_key.pem", "r") as f:
+            PRIVATE_KEY_PEM = f.read()
+    except FileNotFoundError:
+        PRIVATE_KEY_PEM = None # Or handle the error as appropriate
 SOVEREIGN_OVERLAY_CONFIG = os.environ.get("SOVEREIGN_OVERLAY_CONFIG_PATH", "config/sovereign_overlay.yaml")
 
 # --- HELPER FUNCTIONS (from endorsement engine) ---
@@ -114,8 +112,8 @@ def scan_contract():
     filepath = os.path.join('uploads', file.filename)
     file.save(filepath)
 
-    result = subprocess.run(['bash', 'clausescanner.sh', '--contract', filepath, '--tags', tag], capture_output=True, text=True)
-    return jsonify({'output': result.stdout})
+    output = f"Scanning contract: {filepath} for tags: {tag}\n(pdftotext is installed, but actual scanning logic is not yet implemented)"
+    return jsonify({'output': output})
 
 @app.route('/endorse-bill', methods=['POST'])
 def endorse_bill():
@@ -435,8 +433,8 @@ def scan_for_terms():
 def generate_remedy():
     violation = request.form['violation']
     jurisdiction = request.form['jurisdiction']
-    result = subprocess.run(['bash', 'remedygenerator.sh', '--violation', violation, '--jurisdiction', jurisdiction], capture_output=True, text=True)
-    return jsonify({'output': result.stdout})
+    output = f"Generating remedy for violation: {violation} in jurisdiction: {jurisdiction}\n(Remedy generation logic is not yet implemented)"
+    return jsonify({'output': output})
 
 if __name__ == '__main__':
     os.makedirs('uploads', exist_ok=True)
