@@ -19,6 +19,7 @@ export class StateManager {
             validationResults: { found: [], missing: [] },
             uccValidationResults: { passed: [], failed: [] },
             fdcpaLog: savedFdcpaLog,
+            disputes: [],
             vehicleContractFile: null,
             tilaMissingTerms: null,
             denialLetterFile: null,

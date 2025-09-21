@@ -9,6 +9,7 @@ export class BillEndorsement {
         // DOM Elements
         this.billUploadInput = document.getElementById('billUpload');
         this.renderPreviewBtn = document.getElementById('renderPreview');
+        this.clearFormBtn = document.getElementById('clearEndorsementFormBtn'); // New Button
         this.canvas = document.getElementById('previewCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.loader = document.getElementById('loader');
@@ -36,6 +37,7 @@ export class BillEndorsement {
 
     init() {
         this.renderPreviewBtn.addEventListener('click', () => this.renderPdfPreview());
+        this.clearFormBtn.addEventListener('click', () => this.resetForm()); // New Listener
         this.validateNegoBtn.addEventListener('click', () => this.validateNegotiability());
         this.saveBtn.addEventListener('click', () => this.stampEndorsement());
         this.nonNegoBtn.addEventListener('click', () => this.generateNonNegotiableNotice());
@@ -373,6 +375,7 @@ This notice is to inform you of these defects. Any attempt to negotiate this ins
 
 Sincerely,
 
+_________________________
 ${userProfile.name}
         `.trim();
 
@@ -405,16 +408,19 @@ ${userProfile.name}
         this.nonNegoContainer.classList.add('hidden');
     }
 
-    reset(clearFiles = true) {
-        if (clearFiles) {
-            this.billUploadInput.value = '';
-            this.appState.updateState({ billFile: null });
-        }
+    resetForm() {
+        this.billUploadInput.value = '';
+        this.appState.updateState({ billFile: null });
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.endorsementFieldset.disabled = true;
         this.nonNegoBtn.classList.add('hidden');
         this.resetEndorsementState();
         this.resetTenderLetterState();
+        this.endorsementText.value = ''; // Clear endorsement text
+        this.qualifierSelect.value = ''; // Clear qualifier selection
+        this.saveBtn.disabled = true; // Disable save button
+        this.validateNegoBtn.disabled = false; // Enable validate button
+        this.generateTenderLetterBtn.disabled = true; // Disable tender letter button
     }
 
     resetTenderLetterState() {

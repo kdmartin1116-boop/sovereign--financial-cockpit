@@ -9,6 +9,7 @@ export class CreditorManager {
         this.nameInput = document.getElementById('newCreditorName');
         this.addressInput = document.getElementById('newCreditorAddress');
         this.addBtn = document.getElementById('addCreditorBtn');
+        this.exportBtn = document.getElementById('exportCreditorsBtn'); // New Button
         this.creditorListEl = document.getElementById('creditorList');
 
         this.init();
@@ -16,6 +17,7 @@ export class CreditorManager {
 
     init() {
         this.addBtn.addEventListener('click', () => this.addCreditor());
+        this.exportBtn.addEventListener('click', () => this.exportCreditors()); // New Listener
         this.creditorListEl.addEventListener('click', (e) => {
             if (e.target.classList.contains('delete-creditor-btn')) {
                 const id = Number(e.target.dataset.id);
@@ -23,6 +25,18 @@ export class CreditorManager {
             }
         });
         this.renderCreditorList();
+    }
+
+    exportCreditors() {
+        const creditors = this.appState.getState().creditors;
+        if (creditors.length === 0) {
+            this.utils.setStatus('No creditors to export.', true);
+            return;
+        }
+
+        const creditorsJson = JSON.stringify(creditors, null, 2);
+        this.utils.generateDownload(creditorsJson, 'creditors.json', 'application/json');
+        this.utils.logAction('Creditors exported.');
     }
 
     getCreditors() {

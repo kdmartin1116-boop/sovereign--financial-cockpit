@@ -14,6 +14,8 @@ export class VehicleFinancingModule {
         this.scanBtn = document.getElementById('scanContractBtn');
         this.scanResultsEl = document.getElementById('scanResults');
         this.remedyDetailsEl = document.getElementById('tila-remedy-details');
+        this.tilaValidationResultsEl = document.getElementById('tila-validation-results');
+        this.tilaResultsListEl = document.getElementById('tila-results-list');
 
         // TILA Remedy Form Elements
         this.tilaCreditorSelect = document.getElementById('tilaCreditorSelect');
@@ -174,36 +176,63 @@ ${details.userName}
         this.utils.logAction('TILA remedy letter text copied.');
     }
 
-    async _getPdfText(file) {
-        const arrayBuffer = await file.arrayBuffer();
-        const typedarray = new Uint8Array(arrayBuffer);
-        const pdf = await getDocument(typedarray).promise;
-        let textContent = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const text = await page.getTextContent();
-            textContent += text.items.map(s => s.str).join(' ');
-        }
-        return textContent.toLowerCase();
-    }
-
     async validateTilaDisclosures() {
         const currentState = this.appState.getState();
         if (!currentState.vehicleContractFile) {
             this.utils.setStatus('Please upload a vehicle contract first.', true);
             return;
         }
+
+        const formData = new FormData();
+        formData.append('file', currentState.vehicleContractFile);
+
+        this.utils.showLoader();
         this.utils.setStatus('Analyzing TILA disclosures...');
-        const pdfText = await this._getPdfText(currentState.vehicleContractFile);
-        if (!pdfText) return;
 
-        // This is a simplified check. A real implementation would be more robust.
-        const requiredTerms = ['annual percentage rate', 'finance charge', 'amount financed', 'total of payments'];
-        const missing = requiredTerms.filter(term => !pdfText.includes(term));
+        try {
+            const response = await fetch('/api/vehicle/validate-tila', {
+                method: 'POST',
+                body: formData,
+            });
 
-        if (missing.length > 0) {
-            this.appState.updateState({ tilaMissingTerms: missing });
-            this.utils.setStatus(`Missing TILA disclosures: ${missing.join(', ')}`, true);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to validate TILA disclosures.');
+            }
+
+            const data = await response.json();
+            this.displayTilaResults(data.results);
+
+        } catch (error) {
+            console.error('Error validating TILA disclosures:', error);
+            this.utils.setStatus(error.message, true);
+        } finally {
+            this.utils.hideLoader();
+        }
+    }
+
+    displayTilaResults(results) {
+        this.tilaValidationResultsEl.classList.remove('hidden');
+        this.tilaResultsListEl.innerHTML = '';
+        let missingTerms = [];
+
+        for (const [term, found] of Object.entries(results)) {
+            const li = document.createElement('li');
+            li.textContent = `${term}: `;
+            const statusSpan = document.createElement('span');
+            statusSpan.textContent = found ? 'FOUND' : 'MISSING';
+            statusSpan.classList.add(found ? 'text-success' : 'text-error');
+            li.appendChild(statusSpan);
+            this.tilaResultsListEl.appendChild(li);
+
+            if (!found) {
+                missingTerms.push(term);
+            }
+        }
+
+        if (missingTerms.length > 0) {
+            this.appState.updateState({ tilaMissingTerms: missingTerms });
+            this.utils.setStatus(`Missing TILA disclosures: ${missingTerms.join(', ')}`, true);
             this.remedyDetailsEl.classList.remove('hidden');
         } else {
             this.appState.updateState({ tilaMissingTerms: [] });
@@ -255,10 +284,17 @@ ${details.userName}
             return;
         }
 
-        const listItems = clauses.map(clause => `<li>${this.highlightKeywords(clause, tag)}</li>`).join('');
+        const resultsHtml = clauses.map(clause => `
+            <li class="context-clause">
+                <p class="context context-before">${clause.before}</p>
+                <blockquote class="context-match">${this.highlightKeywords(clause.match, tag)}</blockquote>
+                <p class="context context-after">${clause.after}</p>
+            </li>
+        `).join('');
+
         this.scanResultsEl.innerHTML = `
             <h3>Scan Results for "${tag}"</h3>
-            <ul>${listItems}</ul>
+            <ul class="context-list">${resultsHtml}</ul>
         `;
     }
 
@@ -284,6 +320,8 @@ ${details.userName}
         }
         this.scanResultsEl.innerHTML = '';
         this.remedyDetailsEl.classList.add('hidden');
+        this.tilaValidationResultsEl.classList.add('hidden');
+        this.tilaResultsListEl.innerHTML = '';
         this.remedyDetailsEl.querySelectorAll('input').forEach(input => input.value = '');
         this.letterContent = '';
         this.appState.updateState({ tilaMissingTerms: null });

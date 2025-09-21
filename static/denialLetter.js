@@ -9,9 +9,16 @@ export class DenialLetter {
         this.analyzeBtn = document.getElementById('analyzeDenialBtn');
         this.analysisResultsEl = document.getElementById('denial-analysis-results');
         this.denialReasonEl = document.getElementById('denialReason');
+        this.detailsFieldset = document.getElementById('denial-details-fieldset');
         this.responseOptionsEl = document.getElementById('denial-response-options');
         this.letterOutputEl = document.getElementById('denial-letter-output');
         this.letterTextEl = document.getElementById('denialLetterText');
+
+        // New Input Fields
+        this.creditorNameInput = document.getElementById('denialCreditorName');
+        this.creditorAddressInput = document.getElementById('denialCreditorAddress');
+        this.denialDateInput = document.getElementById('denialDate');
+        this.loanTypeInput = document.getElementById('denialLoanType');
 
         // Letter Generation Buttons
         this.genReconBtn = document.getElementById('generateReconsiderationBtn');
