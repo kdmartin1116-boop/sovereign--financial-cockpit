@@ -13,6 +13,7 @@ export class FDCPA_Logger {
         this.violationTypeSelect = document.getElementById('fdcpaViolationType');
         this.logBtn = document.getElementById('logFdcpaViolationBtn');
         this.prepareBtn = document.getElementById('prepareCeaseDesistBtn');
+        this.exportBtn = document.getElementById('exportFdcpaLogBtn');
         this.actionDetailsEl = document.getElementById('fdcpa-action-details');
 
         // Log Violation Form
@@ -43,11 +44,49 @@ export class FDCPA_Logger {
         this.renderLog();
         this.logBtn.addEventListener('click', () => this.logViolation());
         this.prepareBtn.addEventListener('click', () => this.prepareCeaseAndDesist());
+        this.exportBtn.addEventListener('click', () => this.exportLogToCsv());
         this.generateBtn.addEventListener('click', () => this.showConfirmation('generate'));
         this.copyBtn.addEventListener('click', () => this.showConfirmation('copy'));
         this.modalCancelBtn.addEventListener('click', () => this.hideModal());
 
         this.violationDescInput.addEventListener('input', () => this.suggestViolationType());
+    }
+
+    exportLogToCsv() {
+        const log = this.appState.getState().fdcpaLog;
+        if (log.length === 0) {
+            this.utils.setStatus('There are no violations to export.', true);
+            return;
+        }
+
+        const headers = ['ID', 'Date', 'Violation Type', 'Collector', 'Description'];
+        const csvRows = [headers.join(',')];
+
+        log.forEach(item => {
+            const violationSummary = this.knowledgeBase.FDCPA.violations[item.type].summary;
+            const sanitize = (str) => `"${String(str).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+
+            const values = [
+                item.id,
+                item.date,
+                sanitize(violationSummary),
+                sanitize(item.collector),
+                sanitize(item.description)
+            ];
+            csvRows.push(values.join(','));
+        });
+
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'fdcpa_log.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.utils.setStatus('FDCPA log exported to fdcpa_log.csv', false);
     }
 
     hideModal() {
@@ -57,7 +96,7 @@ export class FDCPA_Logger {
 
     showConfirmation(action) {
         const letterText = this._getCeaseAndDesistLetterText();
-        if (!letterText) return; // Validation failed
+        if (!letterText) return;
 
         this.modalTitle.textContent = 'Confirm Cease & Desist';
         this.modalDetails.innerHTML = `
@@ -104,7 +143,7 @@ export class FDCPA_Logger {
             const violation = violations[key];
             if (violation.keywords && Array.isArray(violation.keywords)) {
                 for (const keyword of violation.keywords) {
-                    const regex = new RegExp(`\\b${keyword.toLowerCase()}\\b`);
+                    const regex = new RegExp(`\b${keyword.toLowerCase()}\b`);
                     if (regex.test(description)) {
                         scores[key]++;
                     }
@@ -145,6 +184,7 @@ export class FDCPA_Logger {
         this.appState.updateState({ fdcpaLog: updatedLog });
         localStorage.setItem(CONSTANTS.LOCAL_STORAGE.FDCPA_LOG, JSON.stringify(updatedLog));
         this.renderLog();
+        document.dispatchEvent(new CustomEvent('fdcpaLogUpdated'));
         this.utils.logAction(`FDCPA violation logged for ${newLog.collector}.`);
 
         this.collectorNameInput.value = '';

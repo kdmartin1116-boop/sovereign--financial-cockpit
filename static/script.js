@@ -56,39 +56,6 @@ function handleReset(appState, modules, utils) {
     utils.renderHistory();
 }
 
-function activateTab(tabId) {
-    const tabPanels = document.querySelectorAll('.tab-panel');
-    const tabLinks = document.querySelectorAll('.tab-link');
-
-    tabPanels.forEach(panel => {
-        panel.classList.toggle('active', panel.id === tabId);
-    });
-
-    tabLinks.forEach(link => {
-        link.classList.toggle('active', link.dataset.tab === tabId);
-    });
-}
-
-function initTabs() {
-    const tabNav = document.querySelector('.tab-nav');
-    if (!tabNav) return;
-
-    tabNav.addEventListener('click', (e) => {
-        if (e.target.matches('.tab-link')) {
-            const tabId = e.target.dataset.tab;
-            activateTab(tabId);
-            localStorage.setItem(CONSTANTS.LOCAL_STORAGE.ACTIVE_TAB, tabId);
-        }
-    });
-
-    const savedTab = localStorage.getItem(CONSTANTS.LOCAL_STORAGE.ACTIVE_TAB);
-    if (savedTab && document.getElementById(savedTab)) {
-        activateTab(savedTab);
-    } else {
-        activateTab('tab-dashboard'); // Default tab
-    }
-}
-
 export function initGlobalControls(appState, utils, modules) {
     const resetAppBtn = document.getElementById('resetAppBtn');
     const trackInstrumentBtn = document.getElementById('trackInstrumentBtn');
@@ -117,5 +84,4 @@ export function initGlobalControls(appState, utils, modules) {
 
     applySavedTheme(themeToggle);
     utils.renderHistory();
-    initTabs();
 }

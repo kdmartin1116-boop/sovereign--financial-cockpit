@@ -24,31 +24,44 @@ Sovereign Finance Cockpit is a web-based application designed to empower individ
 
 ## Setup Instructions
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/kdmartin-boop/sovereign-financial-cockpit.git
-   cd sovereign-financial-cockpit
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/kdmartin-boop/sovereign-financial-cockpit.git
+    cd sovereign-financial-cockpit
+    ```
 
-2. **Install dependencies:**
-   This project uses Python and Flask for the backend. You will need to have Python 3 installed. You can install Flask using pip:
-   ```bash
-   pip install Flask
-   ```
-   The frontend dependencies are included in the `index.html` file via CDNs, so no further installation is needed.
+2.  **Set up the Backend:**
+    Install the required Python packages using `pip`:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-3. **Create the `uploads` directory:**
-   The application requires an `uploads` directory to store the files that you upload. Create this directory in the root of the project:
-   ```bash
-   mkdir uploads
-   ```
+3.  **Set up the Frontend:**
+    Install the required Node.js packages using `npm`:
+    ```bash
+    npm install
+    ```
+
+4.  **Create the `uploads` directory:**
+    The application requires an `uploads` directory to store uploaded files. Create it if it doesn't exist:
+    ```bash
+    mkdir uploads
+    ```
 
 ## Running the Project
 
-To run the project, execute the `app.py` file from the root of the project directory:
+This project has a separate backend and frontend.
 
-```bash
-python app.py
-```
+1.  **Run the Backend:**
+    Execute the `app.py` script:
+    ```bash
+    python app.py
+    ```
+    The backend server will start on `http://127.0.0.1:8000`.
 
-The application will be available at `http://127.0.0.1:5000` in your web browser.
+2.  **Run the Frontend:**
+    Start the Vite development server:
+    ```bash
+    npm run dev
+    ```
+    The frontend application will be available at `http://localhost:5173`. Open this URL in your browser.
