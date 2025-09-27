@@ -190,7 +190,7 @@ ${details.userName}
         this.utils.setStatus('Analyzing TILA disclosures...');
 
         try {
-            const response = await fetch('/api/vehicle/validate-tila', {
+            const response = await fetch('/api/validations/tila', {
                 method: 'POST',
                 body: formData,
             });
@@ -257,7 +257,7 @@ ${details.userName}
         this.scanResultsEl.innerHTML = ''; // Clear previous results
 
         try {
-            const response = await fetch('/scan-for-terms', {
+            const response = await fetch('/api/contracts/analysis', {
                 method: 'POST',
                 body: formData,
             });

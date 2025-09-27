@@ -126,12 +126,15 @@ export class PromiseToPayModule {
         this.hideModal();
 
         try {
-            const response = await fetch('/generate-ptp-letter', {
+            const response = await fetch('/api/letters', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(dataToSend),
+                body: JSON.stringify({
+                    type: 'promise_to_pay',
+                    data: dataToSend
+                }),
             });
 
             if (!response.ok) {

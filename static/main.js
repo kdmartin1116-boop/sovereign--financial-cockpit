@@ -13,6 +13,7 @@ import { DenialLetter } from './denialLetter.js';
 import { PromiseToPayModule } from './promiseToPay.js';
 import { Dashboard } from './dashboard.js';
 import { initGlobalControls } from './script.js'; // Assuming script.js contains initGlobalControls
+import { AnnotatorModule } from './annotator.js';
 
 // Set up the PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = '/static/dist/pdf.worker.mjs';
@@ -87,24 +88,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const userProfile = new UserProfile(appState, utils, creditorManager);
 
         // Modules that need deferred initialization
-        let vehicleFinancing = null;
-        let billEndorsement = null;
-        let creditReportAnalysis = null;
-        let fdcpaLogger = null;
-        let denialLetter = null;
-        let promiseToPay = null;
+        const modules = {
+            vehicleFinancing: null,
+            billEndorsement: null,
+            creditReportAnalysis: null,
+            fdcpaLogger: null,
+            denialLetter: null,
+            promiseToPay: null,
+            annotator: null
+        };
 
         // --- GLOBAL CONTROLS ---
-        initGlobalControls(appState, utils, [
-            vehicleFinancing,
-            billEndorsement,
-            creditReportAnalysis,
-            fdcpaLogger,
-            denialLetter,
-            userProfile,
-            creditorManager,
-            promiseToPay
-        ]);
+        initGlobalControls(appState, utils, modules);
 
         // Global Search Logic
         globalSearchInput.addEventListener('keyup', () => {
@@ -128,39 +123,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 switch (targetTabId) {
                     case '#tab-vehicle':
-                        if (!vehicleFinancing) {
-                            vehicleFinancing = new VehicleFinancingModule(appState, KNOWLEDGE_BASE, utils, creditorManager);
-                            initGlobalControls(appState, utils, [vehicleFinancing]); // Re-initialize controls with new module
+                        if (!modules.vehicleFinancing) {
+                            modules.vehicleFinancing = new VehicleFinancingModule(appState, KNOWLEDGE_BASE, utils, creditorManager);
                         }
                         break;
                     case '#tab-endorsement':
-                        if (!billEndorsement) {
-                            billEndorsement = new BillEndorsement(appState, KNOWLEDGE_BASE, utils);
-                            initGlobalControls(appState, utils, [billEndorsement]);
+                        if (!modules.billEndorsement) {
+                            modules.billEndorsement = new BillEndorsement(appState, KNOWLEDGE_BASE, utils);
                         }
                         break;
                     case '#tab-credit-report':
-                        if (!creditReportAnalysis) {
-                            creditReportAnalysis = new CreditReportAnalysis(appState, KNOWLEDGE_BASE, utils, creditorManager);
-                            initGlobalControls(appState, utils, [creditReportAnalysis]);
+                        if (!modules.creditReportAnalysis) {
+                            modules.creditReportAnalysis = new CreditReportAnalysis(appState, KNOWLEDGE_BASE, utils, creditorManager);
                         }
                         break;
                     case '#tab-fdcpa':
-                        if (!fdcpaLogger) {
-                            fdcpaLogger = new FDCPA_Logger(appState, KNOWLEDGE_BASE, utils, creditorManager);
-                            initGlobalControls(appState, utils, [fdcpaLogger]);
+                        if (!modules.fdcpaLogger) {
+                            modules.fdcpaLogger = new FDCPA_Logger(appState, KNOWLEDGE_BASE, utils, creditorManager);
                         }
                         break;
                     case '#tab-denial':
-                        if (!denialLetter) {
-                            denialLetter = new DenialLetter(appState, KNOWLEDGE_BASE, utils);
-                            initGlobalControls(appState, utils, [denialLetter]);
+                        if (!modules.denialLetter) {
+                            modules.denialLetter = new DenialLetter(appState, KNOWLEDGE_BASE, utils);
                         }
                         break;
                     case '#tab-promise':
-                        if (!promiseToPay) {
-                            promiseToPay = new PromiseToPayModule(appState, utils, creditorManager);
-                            initGlobalControls(appState, utils, [promiseToPay]);
+                        if (!modules.promiseToPay) {
+                            modules.promiseToPay = new PromiseToPayModule(appState, utils, creditorManager);
+                        }
+                        break;
+                    case '#tab-annotator':
+                        if (!modules.annotator) {
+                            modules.annotator = new AnnotatorModule(appState, utils);
                         }
                         break;
                 }

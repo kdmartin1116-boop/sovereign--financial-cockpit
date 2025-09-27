@@ -8,8 +8,9 @@ from app import app
 class BlueprintsTestCase(unittest.TestCase):
 
     def setUp(self):
+        app.config['LOGIN_DISABLED'] = True
+        app.config['TESTING'] = True
         self.app = app.test_client()
-        self.app.testing = True
 
     @patch('modules.routes.profile.get_profile')
     def test_get_profile_success(self, mock_get_profile):
