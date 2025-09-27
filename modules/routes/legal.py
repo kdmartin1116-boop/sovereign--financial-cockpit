@@ -4,23 +4,20 @@ from datetime import datetime
 
 legal_bp = Blueprint('legal_bp', __name__)
 
-@legal_bp.route('/generate-tender-letter', methods=['POST'])
-@login_required
-def generate_tender_letter():
-    try:
-        data = request.get_json()
-        user_name = data.get('userName')
-        user_address = data.get('userAddress')
-        creditor_name = data.get('creditorName')
-        creditor_address = data.get('creditorAddress')
-        bill_file_name = data.get('billFileName')
+def _generate_tender_letter(data):
+    user_name = data.get('userName')
+    user_address = data.get('userAddress')
+    creditor_name = data.get('creditorName')
+    creditor_address = data.get('creditorAddress')
+    bill_file_name = data.get('billFileName')
 
-        if not all([user_name, user_address, creditor_name, creditor_address, bill_file_name]):
-              return jsonify({"error": "Missing required data for tender letter generation."} ), 400      
-        today = datetime.now().strftime("%B %d, %Y")
-
-        tender_letter_content = f"""
-*** DISCLAIMER: This letter is based on pseudo-legal theories associated with the \"sovereign citizen\" movement. These theories are not recognized in mainstream commercial law and may have adverse legal consequences. Use at your own risk. ***
+    if not all([user_name, user_address, creditor_name, creditor_address, bill_file_name]):
+        return {"error": "Missing required data for tender letter generation."}, 400
+    
+    today = datetime.now().strftime("%B %d, %Y")
+    
+    letter_content = f'''
+*** DISCLAIMER: This letter is based on pseudo-legal theories associated with the \'sovereign citizen\' movement. These theories are not recognized in mainstream commercial law and may have adverse legal consequences. Use at your own risk. ***
 
 [Your Name: {user_name}]
 [Your Address: {user_address}]
@@ -34,7 +31,7 @@ SUBJECT: Private Administrative Process - Tender of Payment for Instrument {bill
 
 Dear Sir/Madam,
 
-This correspondence serves as a formal tender of payment, presented in good faith, for the instrument identified as \"{bill_file_name}\". This instrument, having been properly endorsed and accepted for value, is hereby presented as a valid and lawful tender for the discharge and settlement of any alleged obligation or account associated therewith.
+This correspondence serves as a formal tender of payment, presented in good faith, for the instrument identified as \'{bill_file_name}\'. This instrument, having been properly endorsed and accepted for value, is hereby presented as a valid and lawful tender for the discharge and settlement of any alleged obligation or account associated therewith.
 
 Be advised that this tender is made in accordance with the principles of commercial law and equity. Under Uniform Commercial Code (UCC) 3-603, a tender of payment of an obligation to pay an instrument made to a person entitled to enforce the instrument, if refused, discharges the obligation of the obligor to pay interest on the obligation after the due date and discharges any party with a right of recourse against the obligor to the extent of the amount of the tender.
 
@@ -47,32 +44,26 @@ Sincerely,
 By: {user_name}
 Authorized Representative / Agent
 All Rights Reserved. Without Prejudice. UCC 1-308.
-"""
-        return jsonify({"letterContent": tender_letter_content.strip()}), 200
-    except Exception as e:
-        return jsonify({"error": f"Failed to generate tender letter: {str(e)}"}), 500
+'''
+    return {"letterContent": letter_content.strip()}, 200
 
-@legal_bp.route('/generate-ptp-letter', methods=['POST'])
-@login_required
-def generate_ptp_letter():
-    try:
-        data = request.get_json(force=True)
-        user_name = data.get('userName')
-        user_address = data.get('userAddress')
-        creditor_name = data.get('creditorName')
-        creditor_address = data.get('creditorAddress')
-        account_number = data.get('accountNumber')
-        promise_amount = data.get('promiseAmount')
-        promise_date = data.get('promiseDate')
 
-        if not all([user_name, user_address, creditor_name, creditor_address, account_number, promise_amount, promise_date]):
-            return jsonify({"error": "Missing required data for Promise to Pay letter generation."} ), 400
+def _generate_ptp_letter(data):
+    user_name = data.get('userName')
+    user_address = data.get('userAddress')
+    creditor_name = data.get('creditorName')
+    creditor_address = data.get('creditorAddress')
+    account_number = data.get('accountNumber')
+    promise_amount = data.get('promiseAmount')
+    promise_date = data.get('promiseDate')
 
-        today = datetime.now().strftime("%B %d, %Y")
-        # Format promise_date for display
-        formatted_promise_date = datetime.strptime(promise_date, '%Y-%m-%d').strftime("%B %d, %Y")
+    if not all([user_name, user_address, creditor_name, creditor_address, account_number, promise_amount, promise_date]):
+        return {"error": "Missing required data for Promise to Pay letter generation."}, 400
 
-        ptp_letter_content = f"""
+    today = datetime.now().strftime("%B %d, %Y")
+    formatted_promise_date = datetime.strptime(promise_date, '%Y-%m-%d').strftime("%B %d, %Y")
+
+    letter_content = f'''
 [Your Name: {user_name}]
 [Your Address: {user_address}]
 
@@ -96,20 +87,38 @@ Thank you for your understanding in this matter.
 Sincerely,
 
 {user_name}
-"""
-        return jsonify({"letterContent": ptp_letter_content.strip()}), 200
-    except Exception as e:
-        return jsonify({"error": f"Failed to generate PTP letter: {str(e)}"}), 500
+'''
+    return {"letterContent": letter_content.strip()}, 200
 
-@legal_bp.route('/generate-remedy', methods=['POST'])
+def _generate_remedy(data):
+    violation = data.get('violation', 'No violation provided')
+    jurisdiction = data.get('jurisdiction', 'No jurisdiction provided')
+    output = f"Generating remedy for violation: {violation} in jurisdiction: {jurisdiction}\n(Remedy generation logic is not yet implemented in Python)"
+    return {"letterContent": output}, 200
+
+
+@legal_bp.route('/api/letters', methods=['POST'])
 @login_required
-def generate_remedy():
+def generate_letter_route():
     try:
-        violation = request.form.get('violation', 'No violation provided')
-        jurisdiction = request.form.get('jurisdiction', 'No jurisdiction provided')
+        request_data = request.get_json()
+        letter_type = request_data.get('type')
+        data = request_data.get('data')
 
-        output = f"Generating remedy for violation: {violation} in jurisdiction: {jurisdiction}\n(Remedy generation logic is not yet implemented in Python)"
+        if not letter_type or not data:
+            return jsonify({"error": "Request must include 'type' and 'data' fields."}, 400)
 
-        return jsonify({'output': output})
+        if letter_type == 'tender':
+            response, status_code = _generate_tender_letter(data)
+            return jsonify(response), status_code
+        elif letter_type == 'promise_to_pay':
+            response, status_code = _generate_ptp_letter(data)
+            return jsonify(response), status_code
+        elif letter_type == 'remedy':
+            response, status_code = _generate_remedy(data)
+            return jsonify(response), status_code
+        else:
+            return jsonify({"error": f"Invalid letter type: {letter_type}"}, 400)
+
     except Exception as e:
-        return jsonify({"error": f"Failed to generate remedy: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to generate letter: {str(e)}"}, 500)

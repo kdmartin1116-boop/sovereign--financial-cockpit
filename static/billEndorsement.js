@@ -128,7 +128,7 @@ export class BillEndorsement {
         formData.append('qualifier', qualifier);
 
         try {
-            const response = await fetch('/stamp_endorsement', {
+            const response = await fetch('/api/endorsements', {
                 method: 'POST',
                 body: formData,
             });
@@ -230,7 +230,7 @@ export class BillEndorsement {
         formData.append('bill', currentState.billFile);
 
         try {
-            const response = await fetch('/endorse-bill', {
+            const response = await fetch('/api/bills/endorse', {
                 method: 'POST',
                 body: formData,
             });
@@ -450,17 +450,20 @@ ${userProfile.name}
         this.utils.setStatus('Generating tender letter...', false);
 
         try {
-            const response = await fetch('/generate_tender_letter', {
+            const response = await fetch('/api/letters', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    userName: userProfile.name,
-                    userAddress: userProfile.address,
-                    creditorName: creditorName,
-                    creditorAddress: creditorAddress,
-                    billFileName: billFile.name,
+                    type: 'tender',
+                    data: {
+                        userName: userProfile.name,
+                        userAddress: userProfile.address,
+                        creditorName: creditorName,
+                        creditorAddress: creditorAddress,
+                        billFileName: billFile.name,
+                    }
                 }),
             });
 

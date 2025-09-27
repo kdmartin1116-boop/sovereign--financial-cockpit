@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, send_file
 from pypdf import PdfReader
 import os
+import json
 from modules.bill_parser import BillParser
 from modules.Ucc3_Endorsements import sign_endorsement
 from modules.remedy_logger import log_remedy
@@ -8,6 +9,8 @@ from modules.attach_endorsement_to_pdf import attach_endorsement_to_pdf_function
 import yaml
 from datetime import datetime
 from flask_login import login_required
+from modules.utils.pdf_processor import extract_text_from_pdf
+from modules.utils.annotator import annotate_pdf_coupon, annotate_image_coupon
 
 endorsement_bp = Blueprint('endorsement_bp', __name__)
 
@@ -23,33 +26,18 @@ def load_yaml_config(config_path: str) -> dict:
     except yaml.YAMLError as e:
         return {"error": f"Error parsing YAML: {e}"}
 
-def get_bill_data_from_source(bill_source_path: str) -> dict:
-    if bill_source_path.endswith(".pdf"):
-        text = ""
-        try:
-            with open(bill_source_path, "rb") as f:
-                reader = PdfReader(f)
-                for page in reader.pages:
-                    text += page.extract_text() or ""
-        except Exception as e:
-            # Fallback to OCR if text extraction fails
-            try:
-                text = pytesseract.image_to_string(bill_source_path)
-            except Exception as ocr_e:
-                return {"error": f"PDF text extraction and OCR failed: {e}, {ocr_e}"}
+def get_bill_data_from_source(file_storage) -> dict:
+    text = extract_text_from_pdf(file_storage)
+    if not text:
+        return {"error": "Could not parse bill data from PDF (no text extracted)."}
+    
+    parser = BillParser()
+    bill_data = parser.parse_bill(text)
 
-        if not text.strip():
-            return {"error": "Could not parse bill data from PDF (no text extracted)."}
+    if not bill_data.get("bill_number"):
+        return {"error": "Could not parse bill number from PDF."}
         
-        parser = BillParser()
-        bill_data = parser.parse_bill(text)
-
-        if not bill_data.get("bill_number"):
-            return {"error": "Could not parse bill number from PDF."}
-            
-        return bill_data
-    else:
-        return {"error": "Unsupported bill source format."}
+    return bill_data
 
 def prepare_endorsement_for_signing(bill_data: dict, endorsement_text: str) -> dict:
     return {
@@ -63,24 +51,9 @@ def prepare_endorsement_for_signing(bill_data: dict, endorsement_text: str) -> d
         "endorsement_text": endorsement_text
     }
 
-@endorsement_bp.route('/scan-contract', methods=['POST'])
-@login_required
-def scan_contract():
-    if 'contract' not in request.files:
-        return jsonify({"error": "No contract file part"}), 400
-    file = request.files['contract']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-    if not file.filename.lower().endswith('.pdf'):
-        return jsonify({"error": "Unsupported file type. Please upload a PDF."} ), 400
-    
-    tag = request.form.get('tag', 'No tag provided')
-    
-    output = f"Scanning contract: {file.filename} for tags: {tag}\n(scanning logic is not yet implemented in Python)"
-    
-    return jsonify({'output': output})
 
-@endorsement_bp.route('/endorse-bill', methods=['POST'])
+
+@endorsement_bp.route('/api/bills/endorse', methods=['POST'])
 @login_required
 def endorse_bill():
     PRIVATE_KEY_PEM = os.environ.get("PRIVATE_KEY_PEM")
@@ -95,15 +68,11 @@ def endorse_bill():
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
     if not file.filename.lower().endswith('.pdf'):
-        return jsonify({"error": "Unsupported file type. Please upload a PDF."}), 400
-
-    uploads_dir = os.path.join(os.getcwd(), 'uploads')
-    os.makedirs(uploads_dir, exist_ok=True)
-    filepath = os.path.join(uploads_dir, file.filename)
-    file.save(filepath)
+        return jsonify({"error": "Unsupported file type. Please upload a PDF."} ), 400
 
     try:
-        bill_data = get_bill_data_from_source(filepath)
+        # The file is now processed in memory, no need to save it first for parsing.
+        bill_data = get_bill_data_from_source(file)
         if "error" in bill_data:
             return jsonify(bill_data), 500
 
@@ -118,6 +87,13 @@ def endorse_bill():
 
         if not sovereign_endorsements:
             return jsonify({"message": "Bill processed, but no applicable endorsements found in config."} ), 200
+
+        # Save the file now that we need to attach things to it
+        uploads_dir = os.path.join(os.getcwd(), 'uploads')
+        os.makedirs(uploads_dir, exist_ok=True)
+        filepath = os.path.join(uploads_dir, file.filename)
+        file.seek(0) # Reset file pointer before saving
+        file.save(filepath)
 
         endorsed_files = []
         for endorsement_type in sovereign_endorsements:
@@ -180,7 +156,7 @@ def endorse_bill():
     except Exception as e:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
-@endorsement_bp.route('/stamp_endorsement', methods=['POST'])
+@endorsement_bp.route('/api/endorsements', methods=['POST'])
 @login_required
 def stamp_endorsement_route():
     if 'bill' not in request.files:
@@ -232,77 +208,10 @@ def get_bill_data():
     if not file.filename.lower().endswith('.pdf'):
         return jsonify({"error": "Unsupported file type. Please upload a PDF."} ), 400
 
-    uploads_dir = os.path.join(os.getcwd(), 'uploads')
-    os.makedirs(uploads_dir, exist_ok=True)
-    filepath = os.path.join(uploads_dir, file.filename)
-    file.save(filepath)
-
     try:
-        bill_data = get_bill_data_from_source(filepath)
+        bill_data = get_bill_data_from_source(file)
         if "error" in bill_data:
             return jsonify(bill_data), 500
         return jsonify(bill_data), 200
     except Exception as e:
         return jsonify({"error": f"Failed to extract bill data: {str(e)}"}), 500
-    finally:
-        if os.path.exists(filepath):
-            os.remove(filepath)
-
-@endorsement_bp.route('/scan-for-terms', methods=['POST'])
-@login_required
-def scan_for_terms():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
-    
-    file = request.files['file']
-    tag = request.form.get('tag')
-
-    if not file or not tag:
-        return jsonify({"error": "Missing file or tag"}), 400
-
-    keyword_map = {
-        "hidden_fee": ["convenience fee", "service charge", "processing fee", "undisclosed", "surcharge"],
-        "misrepresentation": ["misrepresented", "misleading", "deceptive", "false statement", "inaccurate"],
-        "arbitration": ["arbitration", "arbitrator", "binding arbitration", "waive your right to"]
-    }
-
-    keywords = keyword_map.get(tag, [])
-    if not keywords:
-        return jsonify({"error": "Invalid tag specified"}), 400
-
-    uploads_dir = os.path.join(os.getcwd(), 'uploads')
-    os.makedirs(uploads_dir, exist_ok=True)
-    filepath = os.path.join(uploads_dir, file.filename)
-    file.save(filepath)
-
-    try:
-        text = ""
-        with open(filepath, "rb") as f:
-            reader = PdfReader(f)
-            for page in reader.pages:
-                text += page.extract_text() or ""
-        
-        if not text.strip():
-            return jsonify({"error": "Could not extract text from PDF."} ), 500
-
-        found_clauses = []
-        sentences = text.replace('\n', ' ').split('. ')
-
-        for i, sentence in enumerate(sentences):
-            for keyword in keywords:
-                if keyword in sentence.lower():
-                    context = {
-                        "before": sentences[i-1].strip() + "." if i > 0 else "",
-                        "match": sentence.strip() + ".",
-                        "after": sentences[i+1].strip() + "." if i < len(sentences) - 1 else ""
-                    }
-                    found_clauses.append(context)
-                    break
-        
-        return jsonify({"found_clauses": found_clauses})
-
-    except Exception as e:
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-    finally:
-        if os.path.exists(filepath):
-            os.remove(filepath)
