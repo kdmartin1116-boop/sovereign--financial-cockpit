@@ -1,28 +1,14 @@
-# Sovereign Finance Cockpit
+# Sovereign Financial Cockpit
 
-Sovereign Finance Cockpit is a web-based application designed to empower individuals to take control of their financial sovereignty. It provides a suite of tools to analyze financial documents, generate legal remedies, and manage interactions with creditors and debt collectors. The project is built on the philosophy that every individual has the right to understand and manage their financial affairs, and to seek remedy for any injustices they may face.
+## **Disclaimer**
 
-## Features
+**This repository is for educational and informational purposes only. The information provided here does not constitute legal or financial advice. We strongly recommend that you consult with a qualified professional to discuss your specific situation and to ensure you are in compliance with all applicable laws and regulations.**
 
-- **User Profile:** Store your personal information for easy use in all generated documents.
-- **Creditor Address Book:** Manage a list of your creditors and their contact information.
-- **Vehicle Financing Analysis:**
-  - **TILA Disclosure Validation:** Analyze vehicle financing contracts for compliance with the Truth in Lending Act (TILA).
-  - **Remedy Generation:** Generate remedy letters for TILA violations.
-  - **Contract Scanning:** Scan contracts for specific terms such as hidden fees, misrepresentation, and arbitration clauses.
-- **Credit Report Analysis (FCRA):**
-  - **Dispute Letter Generation:** Generate dispute letters for inaccuracies found on your credit report, in accordance with the Fair Credit Reporting Act (FCRA).
-- **FDCPA Debt Collector Log:**
-  - **Violation Logging:** Log instances of abusive or unfair debt collection practices as defined by the Fair Debt Collection Practices Act (FDCPA).
-  - **Cease and Desist Letters:** Prepare and generate Cease and Desist letters to debt collectors.
-- **Monthly Bill Endorsement:**
-  - **Bill Endorsement:** Upload and digitally endorse bills and other financial instruments.
-  - **Negotiability Validation:** Validate the negotiability of financial instruments.
-  - **Tender Letters and Notices:** Generate tender letters and notices for non-negotiable instruments.
-- **Legal Resources:** Access a curated list of commentary and case law relevant to financial sovereignty.
-- **Sovereign Loop:** Track your progress through the key stages of financial remedy: Intake, Validate, Remedy, Log, and Reflect.
+## **Project Goal**
 
-## Setup Instructions
+This project aims to provide a financial cockpit to help users manage their finances.
+
+## **Getting Started**
 
 1.  **Clone the repository:**
     ```bash
@@ -48,7 +34,7 @@ Sovereign Finance Cockpit is a web-based application designed to empower individ
     mkdir uploads
     ```
 
-## Running the Project
+## **Running the Application**
 
 This project has a separate backend and frontend.
 
@@ -57,7 +43,7 @@ This project has a separate backend and frontend.
     ```bash
     python app.py
     ```
-    The backend server will start on `http://127.0.0.1:8000`.
+    The backend server will start on `http://127.0.0.1:8001`.
 
 2.  **Run the Frontend:**
     Start the Vite development server:
@@ -65,3 +51,7 @@ This project has a separate backend and frontend.
     npm run dev
     ```
     The frontend application will be available at `http://localhost:5173`. Open this URL in your browser.
+
+## **Contributing**
+
+We welcome contributions to this project. Please read our `CODE_OF_CONDUCT.md` before contributing.

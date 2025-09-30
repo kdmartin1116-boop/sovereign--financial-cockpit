@@ -1,0 +1,5 @@
+sovereign_endorsements:
+  - trigger: "For Deposit Only"
+    meaning: "This instrument is for deposit into the specified account only."
+    ink_color: "blue"
+    placement: "Front"

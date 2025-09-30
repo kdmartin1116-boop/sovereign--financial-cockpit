@@ -10,6 +10,41 @@ class BillParser:
             "customer_name": r"(?:Customer Name|Client Name|Name|To)[:\s]*([A-Z][a-z]+(?:\s[A-Z][a-z]+){1,3})", # Placeholder, as it's not in the sample PDF
             "remittance_coupon_keywords": r"(?:Remittance Coupon|Payment Stub|Please Detach|Return with Payment|please return bottom portion with your payment)"
         }
+        self.free_text_patterns = {
+            "payee": r"Pay to the order of (.*?)(?: the sum| on or before)",
+            "amount": r"the sum of (?:[$€£¥])?\s*([\d,.]+)",
+            "currency": r"the sum of ([\$€£¥])",
+            "due_date": r"on or before (.*)"
+        }
+
+    def parse_free_text_bill(self, bill_text: str) -> dict:
+        bill_data = {}
+
+        payee_match = re.search(self.free_text_patterns["payee"], bill_text, re.IGNORECASE)
+        if payee_match:
+            bill_data["payee"] = payee_match.group(1).strip()
+
+        amount_match = re.search(self.free_text_patterns["amount"], bill_text, re.IGNORECASE)
+        if amount_match:
+            bill_data["total_amount"] = float(amount_match.group(1).replace(',', ''))
+
+        currency_match = re.search(self.free_text_patterns["currency"], bill_text, re.IGNORECASE)
+        if currency_match:
+            currency_symbol = currency_match.group(1)
+            if currency_symbol == "$":
+                bill_data["currency"] = "USD"
+            elif currency_symbol == "€":
+                bill_data["currency"] = "EUR"
+            elif currency_symbol == "£":
+                bill_data["currency"] = "GBP"
+            elif currency_symbol == "¥":
+                bill_data["currency"] = "JPY"
+
+        due_date_match = re.search(self.free_text_patterns["due_date"], bill_text, re.IGNORECASE)
+        if due_date_match:
+            bill_data["due_date"] = due_date_match.group(1).strip().replace('.', '')
+
+        return bill_data
 
     # The find_remittance_coupon method uses a basic heuristic.
     # For more robust remittance coupon extraction, consider using a library for PDF layout analysis
@@ -35,6 +70,17 @@ class BillParser:
         return coupon_text.strip()
 
     def parse_bill(self, bill_text: str) -> dict:
+        structured_data = self.parse_structured_bill(bill_text)
+        if structured_data.get("bill_number"):
+            return structured_data
+
+        free_text_data = self.parse_free_text_bill(bill_text)
+        if free_text_data:
+            return free_text_data
+
+        return {}
+
+    def parse_structured_bill(self, bill_text: str) -> dict:
         bill_data = {}
         
         # Extract bill number
@@ -45,7 +91,7 @@ class BillParser:
         # Extract total amount and currency
         # This regex tries to capture the currency symbol and the amount more robustly
         amount_currency_match = re.search(
-            r"(?:Total Amount|Amount Due|Balance Due)[:\s]*([$€£¥]?)\s*([\d.,]+)",
+            r"(?:Total Amount|Amount Due|Balance Due)[:\s]*([\$€£¥]?)\s*([\d.,]+)",
             bill_text,
             re.IGNORECASE
         )
