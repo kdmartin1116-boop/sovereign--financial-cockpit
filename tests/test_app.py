@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import pytest
 from app import app
 
@@ -11,3 +12,5 @@ def test_index(client):
     """Test that the index page returns a 200 OK status code."""
     response = client.get('/')
     assert response.status_code == 200
+=======
+>>>>>>> f82eb8f7ab33624184e33e3ff6f7867db8a37365
