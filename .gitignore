@@ -16,6 +16,9 @@ instance/
 uploads/
 # Logs
 *.log
+# Private keys
+config/private_key.pem
+.env
 # IDE-specific files (example for VS Code)
 .vscode/
 

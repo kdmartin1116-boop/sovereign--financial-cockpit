@@ -1,13 +1,15 @@
-from flask import Blueprint, request, jsonify, current_app
-from modules.database import get_profile, save_profile
+from flask import Blueprint, current_app, jsonify, request
 from flask_login import login_required
 
-profile_bp = Blueprint('profile_bp', __name__)
+from modules.database import get_profile, save_profile
 
-@profile_bp.route('/api/profile', methods=['GET'])
+profile_bp = Blueprint("profile_bp", __name__)
+
+
+@profile_bp.route("/api/profile", methods=["GET"])
 @login_required
 def get_profile_route():
-    database_path = current_app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+    database_path = current_app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "")
     try:
         profile = get_profile(database_path)
         if profile:
@@ -16,16 +18,17 @@ def get_profile_route():
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve profile: {str(e)}"}), 500
 
-@profile_bp.route('/api/profile', methods=['POST'])
+
+@profile_bp.route("/api/profile", methods=["POST"])
 @login_required
 def save_profile_route():
-    database_path = current_app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+    database_path = current_app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "")
     data = request.get_json()
-    name = data.get('name')
-    address = data.get('address')
-    email = data.get('email')
-    phone = data.get('phone')
-    
+    name = data.get("name")
+    address = data.get("address")
+    email = data.get("email")
+    phone = data.get("phone")
+
     try:
         save_profile(database_path, name, address, email, phone)
         return jsonify({"message": "Profile saved successfully"})

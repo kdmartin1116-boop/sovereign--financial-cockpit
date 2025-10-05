@@ -1,22 +1,24 @@
-from flask import Blueprint, request, jsonify
-from flask_login import login_required
 from datetime import datetime
 
-legal_bp = Blueprint('legal_bp', __name__)
+from flask import Blueprint, jsonify, request
+from flask_login import login_required
+
+legal_bp = Blueprint("legal_bp", __name__)
+
 
 def _generate_tender_letter(data):
-    user_name = data.get('userName')
-    user_address = data.get('userAddress')
-    creditor_name = data.get('creditorName')
-    creditor_address = data.get('creditorAddress')
-    bill_file_name = data.get('billFileName')
+    user_name = data.get("userName")
+    user_address = data.get("userAddress")
+    creditor_name = data.get("creditorName")
+    creditor_address = data.get("creditorAddress")
+    bill_file_name = data.get("billFileName")
 
     if not all([user_name, user_address, creditor_name, creditor_address, bill_file_name]):
         return {"error": "Missing required data for tender letter generation."}, 400
-    
+
     today = datetime.now().strftime("%B %d, %Y")
-    
-    letter_content = f'''
+
+    letter_content = f"""
 *** DISCLAIMER: This letter is based on pseudo-legal theories associated with the \'sovereign citizen\' movement. These theories are not recognized in mainstream commercial law and may have adverse legal consequences. Use at your own risk. ***
 
 [Your Name: {user_name}]
@@ -44,26 +46,36 @@ Sincerely,
 By: {user_name}
 Authorized Representative / Agent
 All Rights Reserved. Without Prejudice. UCC 1-308.
-'''
+"""
     return {"letterContent": letter_content.strip()}, 200
 
 
 def _generate_ptp_letter(data):
-    user_name = data.get('userName')
-    user_address = data.get('userAddress')
-    creditor_name = data.get('creditorName')
-    creditor_address = data.get('creditorAddress')
-    account_number = data.get('accountNumber')
-    promise_amount = data.get('promiseAmount')
-    promise_date = data.get('promiseDate')
+    user_name = data.get("userName")
+    user_address = data.get("userAddress")
+    creditor_name = data.get("creditorName")
+    creditor_address = data.get("creditorAddress")
+    account_number = data.get("accountNumber")
+    promise_amount = data.get("promiseAmount")
+    promise_date = data.get("promiseDate")
 
-    if not all([user_name, user_address, creditor_name, creditor_address, account_number, promise_amount, promise_date]):
+    if not all(
+        [
+            user_name,
+            user_address,
+            creditor_name,
+            creditor_address,
+            account_number,
+            promise_amount,
+            promise_date,
+        ]
+    ):
         return {"error": "Missing required data for Promise to Pay letter generation."}, 400
 
     today = datetime.now().strftime("%B %d, %Y")
-    formatted_promise_date = datetime.strptime(promise_date, '%Y-%m-%d').strftime("%B %d, %Y")
+    formatted_promise_date = datetime.strptime(promise_date, "%Y-%m-%d").strftime("%B %d, %Y")
 
-    letter_content = f'''
+    letter_content = f"""
 [Your Name: {user_name}]
 [Your Address: {user_address}]
 
@@ -87,34 +99,35 @@ Thank you for your understanding in this matter.
 Sincerely,
 
 {user_name}
-'''
+"""
     return {"letterContent": letter_content.strip()}, 200
 
+
 def _generate_remedy(data):
-    violation = data.get('violation', 'No violation provided')
-    jurisdiction = data.get('jurisdiction', 'No jurisdiction provided')
+    violation = data.get("violation", "No violation provided")
+    jurisdiction = data.get("jurisdiction", "No jurisdiction provided")
     output = f"Generating remedy for violation: {violation} in jurisdiction: {jurisdiction}\n(Remedy generation logic is not yet implemented in Python)"
     return {"letterContent": output}, 200
 
 
-@legal_bp.route('/api/letters', methods=['POST'])
+@legal_bp.route("/api/letters", methods=["POST"])
 @login_required
 def generate_letter_route():
     try:
         request_data = request.get_json()
-        letter_type = request_data.get('type')
-        data = request_data.get('data')
+        letter_type = request_data.get("type")
+        data = request_data.get("data")
 
         if not letter_type or not data:
             return jsonify({"error": "Request must include 'type' and 'data' fields."}, 400)
 
-        if letter_type == 'tender':
+        if letter_type == "tender":
             response, status_code = _generate_tender_letter(data)
             return jsonify(response), status_code
-        elif letter_type == 'promise_to_pay':
+        elif letter_type == "promise_to_pay":
             response, status_code = _generate_ptp_letter(data)
             return jsonify(response), status_code
-        elif letter_type == 'remedy':
+        elif letter_type == "remedy":
             response, status_code = _generate_remedy(data)
             return jsonify(response), status_code
         else:

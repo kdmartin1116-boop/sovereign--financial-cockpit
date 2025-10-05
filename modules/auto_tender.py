@@ -1,8 +1,10 @@
-from PyPDF2 import PdfReader, PdfWriter
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from PIL import Image, ImageDraw, ImageFont
 import io
+
+from PIL import Image, ImageDraw, ImageFont
+from pypdf import PdfReader, PdfWriter
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
 
 def create_annotation_overlay(annotations, signature_path, signature_coords):
     """
@@ -21,7 +23,14 @@ def create_annotation_overlay(annotations, signature_path, signature_coords):
         try:
             with Image.open(signature_path) as signature_img:
                 # Assuming the signature image has a transparent background
-                can.drawImage(signature_path, signature_coords[0], signature_coords[1], width=100, height=50, mask='auto')
+                can.drawImage(
+                    signature_path,
+                    signature_coords[0],
+                    signature_coords[1],
+                    width=100,
+                    height=50,
+                    mask="auto",
+                )
         except FileNotFoundError:
             print(f"Signature file not found at {signature_path}")
 
@@ -31,7 +40,10 @@ def create_annotation_overlay(annotations, signature_path, signature_coords):
     packet.seek(0)
     return packet
 
-def annotate_pdf_coupon(input_pdf_path, output_pdf_path, annotations, signature_path, signature_coords):
+
+def annotate_pdf_coupon(
+    input_pdf_path, output_pdf_path, annotations, signature_path, signature_coords
+):
     """
     Annotates a PDF coupon with text and a signature.
     """
@@ -52,7 +64,10 @@ def annotate_pdf_coupon(input_pdf_path, output_pdf_path, annotations, signature_
 
     print(f"Successfully annotated PDF and saved to {output_pdf_path}")
 
-def annotate_image_coupon(input_image_path, output_image_path, annotations, signature_text, signature_coords):
+
+def annotate_image_coupon(
+    input_image_path, output_image_path, annotations, signature_text, signature_coords
+):
     """
     Annotates an image-based coupon with text and a typed signature.
     """
@@ -86,7 +101,8 @@ def annotate_image_coupon(input_image_path, output_image_path, annotations, sign
     except Exception as e:
         print(f"An error occurred: {e}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # --- Example Usage for Image Annotation ---
 
     # 1. Define the input and output files
@@ -99,7 +115,10 @@ if __name__ == '__main__':
         "Pay to the order of: GENERIC CREDIT CARD": (100, 2000),
         "Amount: $250.00": (100, 2080),
         "Tendered under UCC §3-104 and §3-603(b).": (100, 2160),
-        "Refusal to accept without written cause may result in discharge of obligation.": (100, 2240),
+        "Refusal to accept without written cause may result in discharge of obligation.": (
+            100,
+            2240,
+        ),
     }
 
     # 3. Define the signature details
@@ -107,4 +126,10 @@ if __name__ == '__main__':
     signature_coordinates = (100, 2340)  # (x, y) coordinates for the signature
 
     # 4. Annotate the Image
-    annotate_image_coupon(input_coupon_image, output_coupon_image, payment_annotations, signature, signature_coordinates)
+    annotate_image_coupon(
+        input_coupon_image,
+        output_coupon_image,
+        payment_annotations,
+        signature,
+        signature_coordinates,
+    )
