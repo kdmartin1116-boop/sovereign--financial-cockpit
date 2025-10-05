@@ -1,57 +1,61 @@
 # Sovereign Financial Cockpit
 
-## **Disclaimer**
+## Disclaimer
 
-**This repository is for educational and informational purposes only. The information provided here does not constitute legal or financial advice. We strongly recommend that you consult with a qualified professional to discuss your specific situation and to ensure you are in compliance with all applicable laws and regulations.**
+This repository is for educational and informational purposes only. The information provided here does not constitute legal or financial advice. Consult with a qualified professional for specific guidance.
 
-## **Project Goal**
+## Project overview
 
-This project aims to provide a financial cockpit to help users manage their finances.
+This repository contains multiple components. The `AutoTender_Sovereign` tool is a small utility that demonstrates annotating invoice/coupon images and PDFs with text and signatures. The larger app contains routes and utilities for a lightweight financial cockpit.
 
-## **Getting Started**
+Key features in `AutoTender_Sovereign`:
+- Image annotation (Pillow)
+- PDF annotation (ReportLab + pypdf) — overlays applied per-page
+- Optional OCR auto-locating of fields using `pytesseract` (system binary required)
+- CLI options: `--input`, `--output`, `--pdf`, `--ocr`, `--font`, `--json-output`
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/kdmartin-boop/sovereign-financial-cockpit.git
-    cd sovereign-financial-cockpit
-    ```
+Quick start (Windows PowerShell):
 
-2.  **Set up the Backend:**
-    Install the required Python packages using `pip`:
-    ```bash
-    pip install -r requirements.txt
-    ```
+1. Create a virtual environment (recommended):
 
-3.  **Set up the Frontend:**
-    Install the required Node.js packages using `npm`:
-    ```bash
-    npm install
-    ```
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r AutoTender_Sovereign/requirements.txt
+```
 
-4.  **Create the `uploads` directory:**
-    The application requires an `uploads` directory to store uploaded files. Create it if it doesn't exist:
-    ```bash
-    mkdir uploads
-    ```
+2. (Optional) Install Tesseract for OCR:
 
-## **Running the Application**
+- Download the Windows installer from https://github.com/tesseract-ocr/tesseract
+- Or install via winget/choco if available:
 
-This project has a separate backend and frontend.
+```powershell
+# winget
+winget install --id=UB-Mannheim.Tesseract
+# or choco
+choco install tesseract
+```
 
-1.  **Run the Backend:**
-    Execute the `app.py` script:
-    ```bash
-    python app.py
-    ```
-    The backend server will start on `http://127.0.0.1:8001`.
+Ensure `tesseract.exe` is on your PATH after installation.
 
-2.  **Run the Frontend:**
-    Start the Vite development server:
-    ```bash
-    npm run dev
-    ```
-    The frontend application will be available at `http://localhost:5173`. Open this URL in your browser.
+3. Run the annotator using the bundled sample image:
 
-## **Contributing**
+```powershell
+python AutoTender_Sovereign/coupon_annotator.py
+```
 
-We welcome contributions to this project. Please read our `CODE_OF_CONDUCT.md` before contributing.
+4. Run with OCR and JSON output (after installing Tesseract):
+
+```powershell
+python AutoTender_Sovereign/coupon_annotator.py --ocr --json-output out.json
+```
+
+CI
+
+A basic GitHub Actions workflow is included to run pytest, pre-commit, and the repository secret scan.
+
+Notes
+
+- OCR uses `pytesseract` only; you must install the Tesseract system binary for OCR to function.
+- The annotator uses best-effort heuristics for OCR field detection; tune or replace with ML models for production.
+

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "C90", "B"]
+
+[tool.isort]
+profile = "black"
+
+[project]
+name = "sovereign-financial-cockpit"
+version = "0.1.0"
+description = "Tools for annotating financial documents and a small web app"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[project.dependencies]
+# pinned minimal set - adjust as needed
+pypdf = ">=3.16.0"
+reportlab = ">=4.0"
+Pillow = ">=10.0"
+pytesseract = ">=0.4.3"
+pytest = ">=7.0"

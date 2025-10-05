@@ -1,6 +1,7 @@
 from pypdf import PdfReader
 from werkzeug.datastructures import FileStorage
 
+
 def extract_text_from_pdf(file: FileStorage) -> str | None:
     """
     Extracts all text content from an uploaded PDF file.
@@ -18,10 +19,10 @@ def extract_text_from_pdf(file: FileStorage) -> str | None:
         reader = PdfReader(file)
         for page in reader.pages:
             text += page.extract_text() or ""
-        
+
         if not text.strip():
             return None
-        
+
         return text
     except Exception as e:
         # In a real application, you'd want to log this error.
