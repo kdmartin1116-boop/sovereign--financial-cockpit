@@ -2,12 +2,7 @@ import json
 import os
 import sys
 
-from flask import (
-    Flask,
-    render_template,
-    send_from_directory,
-    url_for,
-)
+from flask import Flask, render_template, send_from_directory, url_for
 from flask_login import LoginManager
 
 from config import Config
@@ -66,10 +61,7 @@ def serve_static_files(filename):
 
 @app.route("/")
 def index():
-    script_url = None
-    if app.debug:  # Force development fallback when in debug mode
-        script_url = None
-    else:
+    if not app.debug:
         manifest_path = os.path.join(app.root_path, "static", "dist", ".vite", "manifest.json")
         try:
             with open(manifest_path) as f:
@@ -78,7 +70,8 @@ def index():
                 script_entry = manifest.get("static/main.js")
                 if script_entry:
                     script_file = script_entry["file"]
-                    script_url = url_for("serve_dist_files", filename=script_file)
+                    # compute the URL for dev/static serving if needed
+                    _ = url_for("serve_dist_files", filename=script_file)
         except (FileNotFoundError, json.JSONDecodeError, KeyError):
             pass  # Fallback to None if manifest not found or invalid
 
