@@ -1,17 +1,17 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 24.1.0
+    rev: ce9c7fffc8f1173c6c3cfb7c7c77c56397454fa1
     hooks:
       - id: black
         args: ["--line-length=100"]
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: main
+    rev: 9c89adb347f6b973f4905a4be0051eb2ecf85dea
     hooks:
       - id: ruff
         args: ["--fix"]
 
   - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.11.4
+    rev: 32119baf69e913a72f2e1b1fbe0d56921b670ebb
     hooks:
       - id: isort
