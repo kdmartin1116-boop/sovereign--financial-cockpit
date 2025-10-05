@@ -1,67 +1,55 @@
-# Sovereign Finance Cockpit
+# AutoTender_Sovereign — Coupon Annotator
 
-Sovereign Finance Cockpit is a web-based application designed to empower individuals to take control of their financial sovereignty. It provides a suite of tools to analyze financial documents, generate legal remedies, and manage interactions with creditors and debt collectors. The project is built on the philosophy that every individual has the right to understand and manage their financial affairs, and to seek remedy for any injustices they may face.
+This small tool demonstrates annotating invoice/coupon images and PDFs with text and signatures.
 
-## Features
+Features added:
+- Image annotation (Pillow)
+- PDF annotation (ReportLab + pypdf) — now applies overlay to all pages
+- Optional OCR auto-locating of fields using `pytesseract` (requires Tesseract binary)
+- CLI options: `--input`, `--output`, `--pdf`, `--ocr`, `--font`, `--json-output`
+ - PDF overlay scaling per page: `--scale-overlay` (generate overlays sized to each PDF page so coordinates align)
+ - Improved OCR grouping heuristics (groups tokens into lines, extracts label:value pairs and amounts)
 
-- **User Profile:** Store your personal information for easy use in all generated documents.
-- **Creditor Address Book:** Manage a list of your creditors and their contact information.
-- **Vehicle Financing Analysis:**
-  - **TILA Disclosure Validation:** Analyze vehicle financing contracts for compliance with the Truth in Lending Act (TILA).
-  - **Remedy Generation:** Generate remedy letters for TILA violations.
-  - **Contract Scanning:** Scan contracts for specific terms such as hidden fees, misrepresentation, and arbitration clauses.
-- **Credit Report Analysis (FCRA):**
-  - **Dispute Letter Generation:** Generate dispute letters for inaccuracies found on your credit report, in accordance with the Fair Credit Reporting Act (FCRA).
-- **FDCPA Debt Collector Log:**
-  - **Violation Logging:** Log instances of abusive or unfair debt collection practices as defined by the Fair Debt Collection Practices Act (FDCPA).
-  - **Cease and Desist Letters:** Prepare and generate Cease and Desist letters to debt collectors.
-- **Monthly Bill Endorsement:**
-  - **Bill Endorsement:** Upload and digitally endorse bills and other financial instruments.
-  - **Negotiability Validation:** Validate the negotiability of financial instruments.
-  - **Tender Letters and Notices:** Generate tender letters and notices for non-negotiable instruments.
-- **Legal Resources:** Access a curated list of commentary and case law relevant to financial sovereignty.
-- **Sovereign Loop:** Track your progress through the key stages of financial remedy: Intake, Validate, Remedy, Log, and Reflect.
+Quick start (Windows PowerShell):
 
-## Setup Instructions
+1. Create a virtual environment (recommended):
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/kdmartin-boop/sovereign-financial-cockpit.git
-    cd sovereign-financial-cockpit
-    ```
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r AutoTender_Sovereign/requirements.txt
+```
 
-2.  **Set up the Backend:**
-    Install the required Python packages using `pip`:
-    ```bash
-    pip install -r requirements.txt
-    ```
+2. (Optional) Install Tesseract for OCR:
 
-3.  **Set up the Frontend:**
-    Install the required Node.js packages using `npm`:
-    ```bash
-    npm install
-    ```
+- Download the Windows installer from https://github.com/tesseract-ocr/tesseract
+- Or install via winget/choco if available:
 
-4.  **Create the `uploads` directory:**
-    The application requires an `uploads` directory to store uploaded files. Create it if it doesn't exist:
-    ```bash
-    mkdir uploads
-    ```
+```powershell
+# winget
+winget install --id=UB-Mannheim.Tesseract
+# or choco
+choco install tesseract
+```
 
-## Running the Project
+Ensure `tesseract.exe` is on your PATH after installation.
 
-This project has a separate backend and frontend.
+3. Run the annotator using bundled sample image:
 
-1.  **Run the Backend:**
-    Execute the `app.py` script:
-    ```bash
-    python app.py
-    ```
-    The backend server will start on `http://127.0.0.1:8000`.
+```powershell
+python AutoTender_Sovereign/coupon_annotator.py
+```
 
-2.  **Run the Frontend:**
-    Start the Vite development server:
-    ```bash
-    npm run dev
-    ```
-    The frontend application will be available at `http://localhost:5173`. Open this URL in your browser.
+4. Run with OCR and JSON output (after installing Tesseract):
+
+```powershell
+python AutoTender_Sovereign/coupon_annotator.py --ocr --json-output out.json
+```
+
+CI
+
+A basic GitHub Actions workflow is included to run pytest.
+
+Notes
+- OCR uses `pytesseract` only; you must install the Tesseract system binary for OCR to function.
+- The script uses best-effort heuristics for OCR field detection; tune or replace with machine-learning models for production use.

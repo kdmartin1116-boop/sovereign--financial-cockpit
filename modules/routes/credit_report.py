@@ -1,34 +1,36 @@
-from flask import Blueprint, request, jsonify
-from modules.credit_report_parser import CreditReportParser
+from flask import Blueprint, jsonify, request
 from flask_login import login_required
+
+from modules.credit_report_parser import CreditReportParser
 from modules.utils.pdf_processor import extract_text_from_pdf
 
-credit_report_bp = Blueprint('credit_report_bp', __name__)
+credit_report_bp = Blueprint("credit_report_bp", __name__)
 
-@credit_report_bp.route('/api/credit-report/upload', methods=['POST'])
+
+@credit_report_bp.route("/api/credit-report/upload", methods=["POST"])
 @login_required
 def upload_credit_report():
-    if 'file' not in request.files:
+    if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
+
+    file = request.files["file"]
+    if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
 
     try:
         text = None
-        if file.filename.lower().endswith('.pdf'):
+        if file.filename.lower().endswith(".pdf"):
             text = extract_text_from_pdf(file)
         else:
-            text = file.read().decode('utf-8')
+            text = file.read().decode("utf-8")
 
         if not text:
-            return jsonify({"error": "Could not extract text from file or file is empty."} ), 500
+            return jsonify({"error": "Could not extract text from file or file is empty."}), 500
 
         # Parse the text
         parser = CreditReportParser(text)
         accounts = parser.parse()
-        
+
         return jsonify(accounts)
 
     except Exception as e:

@@ -1,16 +1,17 @@
 import argparse
-from pypdf import PdfReader, PdfWriter
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
 from io import BytesIO
+
+from pypdf import PdfReader, PdfWriter
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 # Parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--bill')
-parser.add_argument('--endorsement')
-parser.add_argument('--qualifier')
-parser.add_argument('--x', type=int)
-parser.add_argument('--y', type=int)
+parser.add_argument("--bill")
+parser.add_argument("--endorsement")
+parser.add_argument("--qualifier")
+parser.add_argument("--x", type=int)
+parser.add_argument("--y", type=int)
 args = parser.parse_args()
 
 # Create overlay with endorsement text
