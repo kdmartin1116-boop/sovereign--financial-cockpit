@@ -23,10 +23,12 @@ class BillParser:
             "remittance_coupon_keywords": rf"(?:{remittance_alts})",
         }
         self.free_text_patterns = {
-            "payee": r"Pay to the order of (.*?)(?: the sum| on or before)",
-            "amount": r"the sum of (?:[$€£¥])?\s*([\d,.]+)",
-            "currency": r"the sum of ([\$€£¥])",
-            "due_date": r"on or before (.*)",
+            # Match the payee up to line end or typical following phrasing
+            "payee": r"Pay to the order of\s*(.+)",
+            "amount": r"(?:the sum of|Total Amount|Amount Due|Balance Due)[:\s]*([\d.,$€£¥]+)",
+            "currency": r"([\$€£¥])",
+            # Match 'Due Date: ...' or 'on or before ...'
+            "due_date": r"(?:Due Date|on or before)[:\s]*([^\n]+)",
         }
 
     def parse_free_text_bill(self, bill_text: str) -> dict:
@@ -145,5 +147,15 @@ class BillParser:
             print(f"\n--- Remittance Coupon Found ---\n{remittance_coupon_text}\n---")
             # You can add more specific regex patterns here to extract data from the coupon
             # For example, if the coupon has its own amount due or account number
+
+        # Also attempt to extract a payee from free-text patterns if available
+        payee_match = re.search(self.free_text_patterns["payee"], bill_text, re.IGNORECASE)
+        if payee_match:
+            bill_data["payee"] = payee_match.group(1).strip()
+
+        # Also attempt to extract a due date if present
+        due_date_match = re.search(self.free_text_patterns["due_date"], bill_text, re.IGNORECASE)
+        if due_date_match:
+            bill_data["due_date"] = due_date_match.group(1).strip()
 
         return bill_data

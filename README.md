@@ -127,3 +127,43 @@ A basic GitHub Actions workflow is included to run pytest, pre-commit, and the r
 
 - OCR uses `pytesseract` only; you must install the Tesseract system binary for OCR to function.
 - The annotator uses best-effort heuristics for OCR field detection; tune or replace with ML models for production.
+
+## Developer / Contributing
+
+There are a few helper files to make development easier:
+
+- `requirements-dev.txt` - development dependencies (pytest, pre-commit, black, ruff, isort, pytest-cov).
+- `Makefile` - common tasks: `make install`, `make test`, `make lint`, `make format`, `make run`.
+- `.env.example` - example environment variables for local development.
+- `Dockerfile` and `docker-compose.yml` - for local containerized development.
+
+Quick dev setup (local):
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # or .\.venv\Scripts\Activate.ps1 on Windows
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
+Run tests:
+
+```bash
+make test
+```
+
+Format and lint:
+
+```bash
+make format
+make lint
+```
+
+Run locally with Docker:
+
+```bash
+docker-compose up --build
+```
+
+CI is configured in `.github/workflows/ci.yml` and runs on PRs and pushes to `main`.

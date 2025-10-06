@@ -1,0 +1,7 @@
+pytest
+pre-commit
+black
+isort
+ruff
+pytest-cov
+python-dotenv

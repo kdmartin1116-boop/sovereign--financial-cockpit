@@ -1,0 +1,4 @@
+Account Number: 123456
+Pay to the order of Sovereign Bank
+Total Amount: $1200.00
+Due Date: September 1, 2025

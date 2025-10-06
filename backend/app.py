@@ -80,6 +80,12 @@ def tender():
     return f"File {input_file} has been tendered and saved as {output_file}"
 
 
+@app.route("/")
+def index():
+    # Minimal index for backend tests
+    return "OK", 200
+
+
 if __name__ == "__main__":
     init_db(app)
     os.makedirs("uploads", exist_ok=True)
