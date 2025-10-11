@@ -1,0 +1,40 @@
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050; /* High z-index to appear above other content */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notification {
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0.95;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.notification.info {
+    background-color: #0d6efd; /* Bootstrap primary blue */
+}
+
+.notification.success {
+    background-color: #198754; /* Bootstrap success green */
+}
+
+.notification.error {
+    background-color: #dc3545; /* Bootstrap danger red */
+}
+
+.notification.warning {
+    background-color: #ffc107; /* Bootstrap warning yellow */
+    color: #000;
+}

@@ -11,6 +11,8 @@ venv/
 instance/
 # Environment variables
 .env
+.env.local
+.env.production
 .flaskenv
 # Uploaded files
 uploads/
@@ -18,6 +20,14 @@ uploads/
 *.log
 # IDE-specific files (example for VS Code)
 .vscode/
+# Security files
+*.pem
+*.key
+*.crt
+config/private_key*
+# Temporary files
+*.tmp
+*.temp
 
 # Node
 node_modules/

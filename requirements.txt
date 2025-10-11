@@ -1,9 +1,0 @@
-Flask
-pypdf
-reportlab
-ruff
-pytest
-pyyaml
-cryptography
-pytesseract
-Pillow

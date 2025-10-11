@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sovereign Finance Cockpit</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <!-- Unique Identifier: This is the correct index.html being rendered by Flask. -->
+  <div id="global-loader" class="loader-overlay hidden" role="status" aria-live="polite">
+    <div class="loader" aria-label="Loading..."></div>
+  </div>
+
+  <header class="app-header">
+    <h1>🧠 Sovereign Finance Cockpit</h1>
+    <div class="theme-switch-wrapper">
+        <label class="theme-switch" for="themeToggle">
+            <input type="checkbox" id="themeToggle" />
+            <span class="slider round"></span>
+        </label>
+        <span>Dark Mode</span>
+    </div>
+    <div id="global-search-container">
+        <input type="text" id="globalSearchInput" placeholder="Search everything...">
+        <div id="searchResults" class="hidden"></div>
+    </div>
+    <div id="status" class="status-message"></div>
+  </header>
+
+  <div class="app-container">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#tab-dashboard" type="button" role="tab" aria-controls="tab-dashboard" aria-selected="true">Dashboard</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#tab-profile" type="button" role="tab" aria-controls="tab-profile" aria-selected="false">👤 Profile</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="creditors-tab" data-bs-toggle="tab" data-bs-target="#tab-creditors" type="button" role="tab" aria-controls="tab-creditors" aria-selected="false">📚 Creditors</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="vehicle-tab" data-bs-toggle="tab" data-bs-target="#tab-vehicle" type="button" role="tab" aria-controls="tab-vehicle" aria-selected="false">🚗 Vehicle</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="credit-report-tab" data-bs-toggle="tab" data-bs-target="#tab-credit-report" type="button" role="tab" aria-controls="tab-credit-report" aria-selected="false">💳 Credit Report</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="fdcpa-tab" data-bs-toggle="tab" data-bs-target="#tab-fdcpa" type="button" role="tab" aria-controls="tab-fdcpa" aria-selected="false">📢 FDCPA Log</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="denial-tab" data-bs-toggle="tab" data-bs-target="#tab-denial" type="button" role="tab" aria-controls="tab-denial" aria-selected="false">✉️ Denial</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="endorsement-tab" data-bs-toggle="tab" data-bs-target="#tab-endorsement" type="button" role="tab" aria-controls="tab-endorsement" aria-selected="false">💸 Endorsement</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="promise-tab" data-bs-toggle="tab" data-bs-target="#tab-promise" type="button" role="tab" aria-controls="tab-promise" aria-selected="false">🤝 Promise to Pay</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="annotator-tab" data-bs-toggle="tab" data-bs-target="#tab-annotator" type="button" role="tab" aria-controls="tab-annotator" aria-selected="false">🖋️ Annotator</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade" id="tab-annotator" role="tabpanel" aria-labelledby="annotator-tab">
+            <h2>PDF Annotator</h2>
+            <div class="mb-3">
+                <label for="annotatorFile" class="form-label">Upload PDF</label>
+                <input class="form-control" type="file" id="annotatorFile" accept=".pdf">
+            </div>
+            <div id="annotation-entries"></div>
+            <button type="button" class="btn btn-primary" id="addAnnotationBtn">Add Annotation</button>
+            <hr>
+            <h2>Signature</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="signatureText" placeholder="Signature Text">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" id="signatureX" placeholder="X-coordinate">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" id="signatureY" placeholder="Y-coordinate">
+                </div>
+            </div>
+            <hr>
+            <button type="button" class="btn btn-success" id="annotateAndDownloadBtn">Annotate and Download</button>
+        </div>
+        <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+            <h2>Welcome to the Sovereign Finance Cockpit</h2>
+            <p>Select a tool from the sidebar to get started.</p>
+            <p>This application is designed to empower you to take control of your financial sovereignty.</p>
+
+            <div class="mt-4">
+                <h3>Parse Bill</h3>
+                <div class="mb-3">
+                    <label for="billFile" class="form-label">Upload Bill:</label>
+                    <input type="file" class="form-control" id="billFile">
+                </div>
+                <button class="btn btn-primary" id="parseBillBtn">Parse Bill</button>
+
+                <div id="bill-parse-error" class="text-danger mt-2"></div>
+
+                <div id="parsed-bill-data" class="mt-4" style="display: none;">
+                    <h3>Parsed Bill Data</h3>
+                    <ul id="bill-data-list"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tab-promise" role="tabpanel" aria-labelledby="promise-tab">
+            <h2>Promise to Pay Letter Generator</h2>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Letter Details</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="ptpCreditorSelect" class="form-label">Select Creditor</label>
+                            <select id="ptpCreditorSelect" class="form-select"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ptpCreditorName" class="form-label">Creditor Name</label>
+                            <input type="text" class="form-control" id="ptpCreditorName" placeholder="Or enter name manually">
+                        </div>
+                        <div class="col-12">
+                            <label for="ptpCreditorAddress" class="form-label">Creditor Address</label>
+                            <input type="text" class="form-control" id="ptpCreditorAddress" placeholder="Or enter address manually">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="ptpAccountNumber" class="form-label">Account Number</label>
+                            <input type="text" class="form-control" id="ptpAccountNumber">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="ptpPromiseAmount" class="form-label">Promise Amount ($)</label>
+                            <input type="number" class="form-control" id="ptpPromiseAmount" placeholder="e.g., 500.00">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="ptpPromiseDate" class="form-label">Promise Date</label>
+                            <input type="date" class="form-control" id="ptpPromiseDate">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" id="generatePtpLetterBtn">Generate Letter</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ptpLetterContainer" class="hidden card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Generated Letter</h5>
+                    <textarea id="ptpLetterText" class="form-control" rows="15"></textarea>
+                    <div class="mt-2">
+                        <button class="btn btn-secondary" id="copyPtpLetterBtn">Copy Text</button>
+                        <button class="btn btn-primary" id="downloadPtpLetterBtn">Download as .txt</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for Promise to Pay -->
+            <div id="confirmationModal" class="modal hidden" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitle">Confirmation</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="modalDetails"></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="modalCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="modalConfirmBtn">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tab-endorsement" role="tabpanel" aria-labelledby="endorsement-tab">
+            <h2>Bill Endorsement & Tender</h2>
+            <div class="mb-3">
+                <label for="billUpload" class="form-label">Upload Bill or Instrument (PDF)</label>
+                <input class="form-control" type="file" id="billUpload" accept=".pdf">
+            </div>
+            <button class="btn btn-secondary" id="clearEndorsementFormBtn">Clear Form</button>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>1. Validate Negotiability (UCC §3-104)</h3>
+                    <p>Check if the instrument meets the requirements of a negotiable instrument.</p>
+                    <button class="btn btn-primary" id="validateNegotiabilityBtn">Validate Negotiability</button>
+                    <div id="non-negotiable-notice-container" class="hidden mt-3">
+                        <h4>Non-Negotiable Notice</h4>
+                        <textarea id="nonNegotiableNoticeText" class="form-control" rows="10"></textarea>
+                        <div class="mt-2">
+                            <button class="btn btn-secondary" id="copyNoticeBtn">Copy Notice</button>
+                            <button class="btn btn-primary" id="downloadNoticeBtn">Download Notice</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h3>2. Generate Tender Letter</h3>
+                    <p>If the instrument is negotiable, you can generate a tender letter.</p>
+                    <button class="btn btn-success" id="generateTenderLetterBtn" disabled>Generate Tender Letter</button>
+                    <div id="tenderLetterContainer" class="hidden mt-3">
+                        <h4>Tender Letter</h4>
+                        <textarea id="tenderLetterText" class="form-control" rows="10"></textarea>
+                        <div class="mt-2">
+                            <button class="btn btn-secondary" id="copyTenderLetterBtn">Copy Letter</button>
+                            <button class="btn btn-primary" id="downloadTenderLetterBtn">Download Letter</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <h3>3. Endorse Instrument</h3>
+            <fieldset id="endorsement-fieldset" disabled>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="endorsementText" class="form-label">Endorsement Text</label>
+                            <input type="text" class="form-control" id="endorsementText" value="Accepted for Value">
+                        </div>
+                        <div class="mb-3">
+                            <label for="qualifier" class="form-label">Qualifier</label>
+                            <select id="qualifier" class="form-select">
+                                <option value="without-recourse" data-kb-key="WithoutRecourse">Without Recourse</option>
+                                <option value="for-collection" data-kb-key="ForCollection">For Collection</option>
+                                <option value="for-deposit-only" data-kb-key="ForDepositOnly">For Deposit Only</option>
+                                <option value="accepted-for-value" data-kb-key="AcceptedForValue">Accepted for Value</option>
+                            </select>
+                            <div id="qualifier-tooltip" class="tooltip hidden"></div>
+                            <div id="acceptedForValueWarning" class="alert alert-danger mt-2 hidden">
+                                <strong>Warning:</strong> Using "Accepted for Value" is associated with pseudo-legal theories and can have serious adverse consequences. Proceed with extreme caution.
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="renderPreview">Render Preview</button>
+                        <button class="btn btn-success" id="saveEndorsementBtn" disabled>Stamp & Download Endorsed PDF</button>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="loader" class="hidden">Loading...</div>
+                        <canvas id="previewCanvas" class="hidden" width="500" height="700"></canvas>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div class="tab-pane fade" id="tab-denial" role="tabpanel" aria-labelledby="denial-tab">
+            <h2>Credit Application Denial Assistant</h2>
+            <div class="mb-3">
+                <label for="denialLetterUpload" class="form-label">Upload Denial Letter (PDF)</label>
+                <input class="form-control" type="file" id="denialLetterUpload" accept=".pdf">
+            </div>
+            <button class="btn btn-primary" id="analyzeDenialBtn">Analyze Letter</button>
+            <hr>
+            <div id="denial-analysis-results" class="hidden">
+                <h3>Analysis Results</h3>
+                <p><strong>Reason for Denial:</strong> <span id="denialReason"></span></p>
+                <fieldset id="denial-details-fieldset" class="mb-3">
+                    <legend>Provide Details for Response Letter</legend>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="denialCreditorName" class="form-label">Creditor Name</label>
+                            <input type="text" class="form-control" id="denialCreditorName" placeholder="e.g., Capital One">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="denialDate" class="form-label">Date of Denial Letter</label>
+                            <input type="date" class="form-control" id="denialDate">
+                        </div>
+                        <div class="col-12">
+                            <label for="denialCreditorAddress" class="form-label">Creditor Address</label>
+                            <input type="text" class="form-control" id="denialCreditorAddress" placeholder="123 Main St, Anytown, USA">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="denialLoanType" class="form-label">Loan/Card Type</label>
+                            <input type="text" class="form-control" id="denialLoanType" placeholder="e.g., Platinum Rewards Card">
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <div id="denial-response-options" class="hidden">
+                <h3>Response Options</h3>
+                <p>Based on the analysis, here are some potential responses. Select one to generate a template.</p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    <button class="btn btn-success" id="generateReconsiderationBtn">Generate Letter of Reconsideration</button>
+                    <button class="btn btn-warning" id="generateFcraDisputeBtn">Generate FCRA Dispute Letter</button>
+                </div>
+            </div>
+            <div id="letter-generation-inputs" class="mt-3">
+                <div id="reconsideration-inputs" class="hidden">
+                    <div class="mb-3">
+                        <label for="reconsiderationNote" class="form-label">Personal Note for Reconsideration</label>
+                        <textarea class="form-control" id="reconsiderationNote" rows="3" placeholder="Add a personal note explaining why you believe your application should be reconsidered (e.g., recent income increase, error in application)."></textarea>
+                    </div>
+                </div>
+                <div id="fcra-dispute-inputs" class="hidden">
+                    <div class="mb-3">
+                        <label for="fcraDisputeItem" class="form-label">Specific Item to Dispute</label>
+                        <input type="text" class="form-control" id="fcraDisputeItem" placeholder="e.g., 'Late payment on account #12345', 'Incorrect balance on account #67890'">
+                    </div>
+                </div>
+            </div>
+            <div id="denial-letter-output" class="hidden mt-3">
+                <h3>Generated Letter</h3>
+                <textarea id="denialLetterText" class="form-control" rows="15"></textarea>
+                <div class="mt-2">
+                    <button class="btn btn-secondary" id="copyDenialLetterBtn">Copy Text</button>
+                    <button class="btn btn-primary" id="downloadDenialLetterBtn">Download as .txt</button>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tab-fdcpa" role="tabpanel" aria-labelledby="fdcpa-tab">
+            <h2>FDCPA Violation Logger</h2>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Log a New Violation</h5>
+                    <div class="mb-3">
+                        <label for="collectorName" class="form-label">Collector's Name</label>
+                        <input type="text" class="form-control" id="collectorName" placeholder="Enter name of debt collector">
+                    </div>
+                    <div class="mb-3">
+                        <label for="violationDate" class="form-label">Date of Violation</label>
+                        <input type="date" class="form-control" id="violationDate">
+                    </div>
+                    <div class="mb-3">
+                        <label for="violationDescription" class="form-label">Description of Violation</label>
+                        <textarea class="form-control" id="violationDescription" rows="3" placeholder="Describe what happened, including time, place, and any witnesses."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fdcpaViolationType" class="form-label">Violation Type</label>
+                        <div class="input-group">
+                            <select class="form-select" id="fdcpaViolationType"></select>
+                            <span class="input-group-text" id="fdcpaSuggestionConfidence"></span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="logFdcpaViolationBtn">Log Violation</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Violation Log</h5>
+                    <div id="fdcpaLogDisplay" class="mb-3">
+                        <p class="text-muted">No violations logged yet.</p>
+                    </div>
+                    <button class="btn btn-secondary" id="exportFdcpaLogBtn">Export Log (CSV)</button>
+                    <button class="btn btn-danger" id="prepareCeaseDesistBtn" disabled>Prepare Cease & Desist</button>
+                </div>
+            </div>
+
+            <div id="fdcpa-action-details" class="hidden card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Generate Cease & Desist Letter</h5>
+                    <p>This will generate a letter demanding the collector cease all communication with you, based on the last logged violation.</p>
+                    <div class="mb-3">
+                        <label for="fdcpaCollectorName" class="form-label">Collector Name</label>
+                        <input type="text" class="form-control" id="fdcpaCollectorName" placeholder="Collector's name from log">
+                    </div>
+                    <div class="mb-3">
+                        <label for="fdcpaCollectorAddress" class="form-label">Collector Address</label>
+                        <input type="text" class="form-control" id="fdcpaCollectorAddress" placeholder="Enter collector's mailing address">
+                    </div>
+                    <div class="mb-3">
+                        <label for="fdcpaAccountNumber" class="form-label">Account Number (Optional)</label>
+                        <input type="text" class="form-control" id="fdcpaAccountNumber" placeholder="Enter account number if known">
+                    </div>
+                    <button class="btn btn-success" id="generateCeaseDesistBtn">Generate & Download Letter</button>
+                    <button class="btn btn-secondary" id="copyCeaseDesistBtn">Copy Letter Text</button>
+                </div>
+            </div>
+            
+            <!-- Modal for FDCPA -->
+            <div id="confirmationModal" class="modal hidden" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitle">Confirmation</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="modalDetails"></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="modalCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="modalConfirmBtn">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tab-credit-report" role="tabpanel" aria-labelledby="credit-report-tab">
+            <h2>Credit Report Analysis</h2>
+            <div class="mb-3">
+                <label for="creditReportUpload" class="form-label">Upload Credit Report (JSON or TXT)</label>
+                <input class="form-control" type="file" id="creditReportUpload" accept=".json,.txt">
+            </div>
+            <button class="btn btn-primary" id="parseReportBtn">Parse Report</button>
+            <button class="btn btn-secondary" id="generateSampleReportBtn">Generate Sample Report</button>
+            <hr>
+            <div id="parsed-accounts" class="hidden">
+                <h3>Parsed Accounts</h3>
+                <div id="credit-report-charts" class="mb-4">
+                    <div class="chart-container">
+                        <canvas id="account-types-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="account-status-chart"></canvas>
+                    </div>
+                </div>
+                <div id="parsed-accounts-list"></div>
+            </div>
+            <hr>
+            <div id="dispute-form">
+                <h3>FCRA Dispute Letter Generator</h3>
+                <div class="mb-3">
+                    <label for="accountNumberInput" class="form-label">Account to Dispute</label>
+                    <input type="text" class="form-control" id="accountNumberInput" placeholder="Select an account from the parsed report above">
+                </div>
+                <div class="mb-3">
+                    <label for="fcraCreditorSelect" class="form-label">Creditor</label>
+                    <div class="input-group">
+                        <select id="fcraCreditorSelect" class="form-select"></select>
+                        <button class="btn btn-outline-secondary" type="button" id="selectCreditorBtn">Select from List</button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="violationSelect" class="form-label">Select FCRA Violation</label>
+                    <div class="input-group">
+                        <select id="violationSelect" class="form-select"></select>
+                        <button class="btn btn-outline-info" type="button" id="fcraViolationInfo">Show Info</button>
+                    </div>
+                    <div id="fcraViolationDetails" class="hidden alert alert-info mt-2"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="disputeReasonInput" class="form-label">Reason for Dispute</label>
+                    <textarea class="form-control" id="disputeReasonInput" rows="3" placeholder="Briefly explain why the information is inaccurate."></textarea>
+                </div>
+                <button class="btn btn-success" id="generateDisputeBtn">Generate & Download Letter</button>
+                <button class="btn btn-secondary" id="copyFcraLetterBtn">Copy Letter Text</button>
+                <button class="btn btn-info" id="trackDisputeBtn">Track Dispute</button>
+                <div id="fcraResults" class="mt-3"></div>
+            </div>
+            <hr>
+            <h3>Dispute Tracking</h3>
+            <div id="dispute-tracking-table"></div>
+
+            <!-- Confirmation Modal -->
+            <div id="confirmationModal" class="modal hidden">
+                <div class="modal-content">
+                    <h3 id="modalTitle">Confirmation</h3>
+                    <p id="modalBody"></p>
+                    <div class="modal-footer">
+                        <button id="modalCancelBtn" class="btn btn-secondary">Cancel</button>
+                        <button id="modalConfirmBtn" class="btn btn-primary">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tab-vehicle" role="tabpanel" aria-labelledby="vehicle-tab">
+            <h2>Vehicle Financing Analysis</h2>
+            <div class="mb-3">
+                <label for="vehicleContract" class="form-label">Upload Vehicle Contract (PDF)</label>
+                <input class="form-control" type="file" id="vehicleContract" accept=".pdf">
+            </div>
+            <hr>
+            <h3>1. TILA Disclosure Validation</h3>
+            <p>This tool checks if your contract contains the key disclosures required by the Truth in Lending Act (TILA).</p>
+            <button class="btn btn-primary" id="validateDisclosureBtn">Validate TILA Disclosures</button>
+            <div id="tila-validation-results" class="hidden mt-3">
+                <h4>Validation Results:</h4>
+                <ul id="tila-results-list"></ul>
+            </div>
+            <div id="tila-remedy-details" class="hidden mt-3">
+                <h4>Generate TILA Remedy Letter</h4>
+                <p>It appears some TILA disclosures are missing. You can generate a letter to the creditor to demand a remedy.</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="tilaCreditorSelect" class="form-label">Select Creditor</label>
+                        <select id="tilaCreditorSelect" class="form-select"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tilaCreditorName" class="form-label">Creditor Name</label>
+                        <input type="text" class="form-control" id="tilaCreditorName" placeholder="Or enter name manually">
+                    </div>
+                    <div class="col-12">
+                        <label for="tilaCreditorAddress" class="form-label">Creditor Address</label>
+                        <input type="text" class="form-control" id="tilaCreditorAddress" placeholder="Or enter address manually">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tilaContractDate" class="form-label">Contract Date</label>
+                        <input type="date" class="form-control" id="tilaContractDate">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tilaVehicleInfo" class="form-label">Vehicle (Year, Make, Model)</label>
+                        <input type="text" class="form-control" id="tilaVehicleInfo" placeholder="e.g., 2023 Honda Civic">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-success" id="generateRemedyBtn">Generate & Download Letter</button>
+                    <button class="btn btn-secondary" id="copyTilaLetterBtn">Copy Letter Text</button>
+                </div>
+            </div>
+            <hr>
+            <h3>2. Scan Contract for Unfair Terms</h3>
+            <p>Scan the contract for keywords related to common unfair practices.</p>
+            <div class="input-group mb-3">
+                <select class="form-select" id="violationTags">
+                    <option value="hidden_fee">Hidden Fees</option>
+                    <option value="misrepresentation">Misrepresentation</option>
+                    <option value="arbitration">Arbitration Clauses</option>
+                </select>
+                <button class="btn btn-primary" id="scanContractBtn">Scan for Selected Term</button>
+            </div>
+            <div id="scanResults" class="mt-3"></div>
+        </div>
+        <div class="tab-pane fade" id="tab-creditors" role="tabpanel" aria-labelledby="creditors-tab">
+            <div id="creditors-react-root"></div>
+        </div>
+        <div class="tab-pane fade" id="tab-profile" role="tabpanel" aria-labelledby="profile-tab">
+            <div id="profile-react-root"></div>
+        </div>
+    </div>
+
+  <div id="root"></div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script type="module" src="{{ url_for('static', filename='dist/main.js') }}"></script>
+</body>
+</html>
